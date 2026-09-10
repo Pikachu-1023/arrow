@@ -13,72 +13,104 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; -webkit-user-select: none; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0f172a; touch-action: none; }
         #game-container { width: 100vw; height: 100vh; position: relative; }
+        
+        /* 登入視窗 */
+        #login-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        .login-box {
+            background: #1e293b;
+            border: 2px solid #38bdf8;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            color: #fff;
+            width: 90%;
+            max-width: 360px;
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+        }
+        .login-box h2 { margin-top: 0; margin-bottom: 20px; color: #38bdf8; }
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            outline: none;
+        }
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: #38bdf8;
+            color: #0f172a;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .login-box button:active { background: #0284c7; }
+
         #top-gui {
             position: absolute;
-            top: 15px;
-            left: 50%;
+            top: 15px; left: 50%;
             transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
+            display: flex; gap: 15px;
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 8px 20px;
-            border-radius: 50px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            color: #fff;
-            z-index: 10;
+            padding: 8px 20px; border-radius: 50px;
+            color: #fff; z-index: 10;
         }
         .stat-box { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; }
-        .stat-box i { color: #38bdf8; }
-        #joystick-zone {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 140px;
-            height: 140px;
-            z-index: 20;
-        }
+        #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 140px; height: 140px; z-index: 20; }
+        
         #upgrade-modal {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            display: none; position: absolute;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(20px);
             border: 2px solid #38bdf8;
-            padding: 20px;
-            border-radius: 24px;
-            text-align: center;
-            color: #fff;
-            z-index: 100;
-            box-shadow: 0 0 40px rgba(56, 189, 248, 0.3);
-            width: 85%;
-            max-width: 400px;
+            padding: 20px; border-radius: 24px;
+            text-align: center; color: #fff; z-index: 100;
+            width: 85%; max-width: 400px;
         }
         .skill-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         .skill-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            padding: 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            transition: all 0.2s;
+            background: #1e293b; border: 1px solid #334155;
+            padding: 12px; border-radius: 12px; cursor: pointer;
+            display: flex; align-items: center; gap: 15px;
         }
-        .skill-card:active { background: #334155; border-color: #38bdf8; }
         .skill-card i { font-size: 24px; color: #38bdf8; }
     </style>
 </head>
 <body>
 
+<div id="login-modal">
+    <div class="login-box">
+        <h2><i class="fa-solid fa-bow-arrow"></i> 弓箭手大作戰</h2>
+        <input type="text" id="player-name-input" placeholder="請輸入名字..." maxlength="10">
+        <button onclick="startGame()">進入遊戲</button>
+    </div>
+</div>
+
 <div id="game-container">
     <div id="top-gui">
-        <div class="stat-box"><i class="fa-solid fa-crown"></i> LV.<span id="gui-level">1</span></div>
-        <div class="stat-box"><i class="fa-solid fa-bolt"></i> <span id="gui-exp">0</span></div>
+        <div class="stat-box"><i class="fa-solid fa-crown" style="color:#facc15;"></i> LV.<span id="gui-level">1</span></div>
+        <div class="stat-box"><i class="fa-solid fa-bolt" style="color:#38bdf8;"></i> <span id="gui-exp">0</span></div>
         <div class="stat-box"><i class="fa-solid fa-heart" style="color:#ef4444;"></i> <span id="gui-hp">100/100</span></div>
     </div>
 
@@ -105,82 +137,90 @@
 
 <script>
 const socket = io();
-
-const config = {
-    type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    parent: 'game-container',
-    scale: {
-        mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-    },
-    physics: {
-        default: 'arcade',
-        arcade: { debug: false }
-    },
-    scene: { preload: preload, create: create, update: update }
-};
-
-const game = new Phaser.Game(config);
-
-let player;
-let otherPlayers = {};
-let arrows;
-let gemsGroup;
-let cursors;
-let wasd;
+let game, sceneRef;
+let player, otherPlayers = {};
+let arrowsGroup, otherArrowsGroup, gemsGroup;
+let cursors, wasd;
 let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
-let playerStats = { level: 1, exp: 0, hp: 100, maxHp: 100, arrowCount: 1, fireRate: 300 };
+let playerStats = { name: '玩家', level: 1, exp: 0, hp: 100, maxHp: 100, arrowCount: 1, fireRate: 300 };
+
+function startGame() {
+    let nameInput = document.getElementById('player-name-input').value.trim();
+    if (nameInput) playerStats.name = nameInput;
+    document.getElementById('login-modal').style.display = 'none';
+
+    initGame();
+    socket.emit('joinGame', { name: playerStats.name });
+}
+
+function initGame() {
+    const config = {
+        type: Phaser.AUTO,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        parent: 'game-container',
+        scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
+        physics: { default: 'arcade', arcade: { debug: false } },
+        scene: { preload: preload, create: create, update: update }
+    };
+    game = new Phaser.Game(config);
+}
 
 function preload() {}
 
 function create() {
-    const scene = this;
+    sceneRef = this;
 
-    scene.cameras.main.setBounds(0, 0, 1600, 1200);
-    scene.physics.world.setBounds(0, 0, 1600, 1200);
+    sceneRef.cameras.main.setBounds(0, 0, 1600, 1200);
+    sceneRef.physics.world.setBounds(0, 0, 1600, 1200);
 
-    let graphics = scene.add.graphics();
+    // 背景網格
+    let graphics = sceneRef.add.graphics();
     graphics.lineStyle(1, 0x334155, 0.8);
     for (let x = 0; x < 1600; x += 40) graphics.lineBetween(x, 0, x, 1200);
     for (let y = 0; y < 1200; y += 40) graphics.lineBetween(0, y, 1600, y);
 
-    arrows = scene.physics.add.group();
-    gemsGroup = scene.physics.add.group();
+    arrowsGroup = sceneRef.physics.add.group();
+    otherArrowsGroup = sceneRef.physics.add.group();
+    gemsGroup = sceneRef.physics.add.group();
 
-    cursors = scene.input.keyboard.createCursorKeys();
-    wasd = scene.input.keyboard.addKeys({
+    cursors = sceneRef.input.keyboard.createCursorKeys();
+    wasd = sceneRef.input.keyboard.addKeys({
         up: Phaser.Input.Keyboard.KeyCodes.W,
         down: Phaser.Input.Keyboard.KeyCodes.S,
         left: Phaser.Input.Keyboard.KeyCodes.A,
         right: Phaser.Input.Keyboard.KeyCodes.D
     });
 
-    player = scene.add.container(800, 600);
-    let body = scene.add.circle(0, 0, 18, 0x38bdf8);
-    let bow = scene.add.rectangle(12, 0, 10, 6, 0x0284c7);
-    player.add([body, bow]);
-    scene.physics.world.enable(player);
-    player.body.setCollideWorldBounds(true);
-
-    scene.cameras.main.startFollow(player, true, 0.08, 0.08);
-
     initJoystick();
+
+    // Socket 監聽事件
+    socket.on('initSelf', (data) => {
+        player = createPlayerContainer(sceneRef, data.x, data.y, data.name, 0x38bdf8, true);
+        sceneRef.cameras.main.startFollow(player, true, 0.08, 0.08);
+    });
 
     socket.on('currentPlayers', (players) => {
         Object.keys(players).forEach((id) => {
-            if (id !== socket.id) addOtherPlayer(scene, players[id]);
+            if (id !== socket.id && !otherPlayers[id]) {
+                otherPlayers[id] = createPlayerContainer(sceneRef, players[id].x, players[id].y, players[id].name, 0xef4444, false);
+                otherPlayers[id].id = id;
+            }
         });
     });
 
-    socket.on('newPlayer', (playerInfo) => { addOtherPlayer(scene, playerInfo); });
+    socket.on('newPlayer', (info) => {
+        if (!otherPlayers[info.id] && info.id !== socket.id) {
+            otherPlayers[info.id] = createPlayerContainer(sceneRef, info.x, info.y, info.name, 0xef4444, false);
+            otherPlayers[info.id].id = info.id;
+        }
+    });
 
-    socket.on('playerMoved', (playerInfo) => {
-        if (otherPlayers[playerInfo.id]) {
-            otherPlayers[playerInfo.id].setPosition(playerInfo.x, playerInfo.y);
-            otherPlayers[playerInfo.id].setRotation(playerInfo.rotation);
+    socket.on('playerMoved', (info) => {
+        if (otherPlayers[info.id]) {
+            otherPlayers[info.id].setPosition(info.x, info.y);
+            otherPlayers[info.id].setRotation(info.rotation);
         }
     });
 
@@ -191,33 +231,65 @@ function create() {
         }
     });
 
-    socket.on('gemsData', (gems) => { gems.forEach(g => spawnGem(scene, g)); });
-    socket.on('gemSpawn', (gem) => { spawnGem(scene, gem); });
-    socket.on('arrowFired', (data) => { fireArrowLocal(scene, data.x, data.y, data.angle, false); });
+    socket.on('gemsData', (gems) => { gems.forEach(g => spawnGem(sceneRef, g)); });
+    socket.on('gemSpawn', (gem) => { spawnGem(sceneRef, gem); });
 
-    scene.input.on('pointerdown', (pointer) => {
+    socket.on('arrowFired', (data) => {
+        fireArrowLocal(sceneRef, data.x, data.y, data.angle, false, data.ownerId);
+    });
+
+    socket.on('playerHealthUpdate', (data) => {
+        if (data.id === socket.id) {
+            playerStats.hp = data.hp;
+            updateGUI();
+        }
+        let target = (data.id === socket.id) ? player : otherPlayers[data.id];
+        if (target) updateHpBar(target, data.hp, data.maxHp);
+    });
+
+    socket.on('playerRespawn', (data) => {
+        if (data.id === socket.id) {
+            playerStats.hp = data.maxHp;
+            player.setPosition(data.x, data.y);
+            updateGUI();
+            updateHpBar(player, data.hp, data.maxHp);
+        } else if (otherPlayers[data.id]) {
+            otherPlayers[data.id].setPosition(data.x, data.y);
+            updateHpBar(otherPlayers[data.id], data.hp, data.maxHp);
+        }
+    });
+
+    // 點擊發射箭矢
+    sceneRef.input.on('pointerdown', (pointer) => {
+        if (!player) return;
         if (pointer.x < 180 && pointer.y > window.innerHeight - 180) return;
 
-        let now = scene.time.now;
+        let now = sceneRef.time.now;
         if (now - lastFired > playerStats.fireRate) {
             lastFired = now;
             let angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.worldX, pointer.worldY);
             player.setRotation(angle);
 
             if (playerStats.arrowCount === 1) {
-                fireArrowLocal(scene, player.x, player.y, angle, true);
+                fireArrowLocal(sceneRef, player.x, player.y, angle, true, socket.id);
             } else {
-                fireArrowLocal(scene, player.x, player.y, angle - 0.2, true);
-                fireArrowLocal(scene, player.x, player.y, angle, true);
-                fireArrowLocal(scene, player.x, player.y, angle + 0.2, true);
+                fireArrowLocal(sceneRef, player.x, player.y, angle - 0.2, true, socket.id);
+                fireArrowLocal(sceneRef, player.x, player.y, angle, true, socket.id);
+                fireArrowLocal(sceneRef, player.x, player.y, angle + 0.2, true, socket.id);
             }
         }
     });
 
-    scene.physics.add.overlap(player, gemsGroup, (p, gem) => {
-        socket.emit('collectGem', gem.id);
-        gem.destroy();
-        gainExp(25);
+    // 碰撞判定：玩家與寶石
+    sceneRef.physics.add.overlap(arrowsGroup, gemsGroup, null, null, this);
+    
+    // 碰撞判定：我方箭矢擊中敵人
+    sceneRef.physics.add.overlap(arrowsGroup, sceneRef.physics.world.bodies, (arrow, body) => {
+        let targetContainer = body.gameObject;
+        if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
+            socket.emit('hitPlayer', targetContainer.id);
+            arrow.destroy();
+        }
     });
 }
 
@@ -225,8 +297,7 @@ function update() {
     if (!player || !player.body) return;
 
     let speed = 220;
-    let vx = 0;
-    let vy = 0;
+    let vx = 0, vy = 0;
 
     if (cursors.left.isDown || wasd.left.isDown) vx = -speed;
     if (cursors.right.isDown || wasd.right.isDown) vx = speed;
@@ -239,8 +310,44 @@ function update() {
     }
 
     player.body.setVelocity(vx, vy);
-
     socket.emit('playerInput', { x: player.x, y: player.y, rotation: player.rotation });
+
+    // 我吃寶石
+    sceneRef.physics.overlap(player, gemsGroup, (p, gem) => {
+        socket.emit('collectGem', gem.id);
+        gem.destroy();
+        gainExp(25);
+    });
+}
+
+function createPlayerContainer(scene, x, y, nameText, color, isSelf) {
+    let container = scene.add.container(x, y);
+    
+    let body = scene.add.circle(0, 0, 18, color);
+    let bow = scene.add.rectangle(12, 0, 10, 6, 0x0284c7);
+
+    // 名字標籤
+    let name = scene.add.text(0, -38, nameText, { font: '12px Arial', fill: '#ffffff', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5);
+
+    // 血條背景與血條
+    let hpBg = scene.add.rectangle(0, -25, 40, 6, 0x334155);
+    let hpBar = scene.add.rectangle(-20, -25, 40, 6, 0xef4444).setOrigin(0, 0.5);
+
+    container.add([body, bow, name, hpBg, hpBar]);
+    container.hpBar = hpBar;
+
+    scene.physics.world.enable(container);
+    container.body.setCircle(18, -18, -18);
+    container.body.setCollideWorldBounds(true);
+
+    return container;
+}
+
+function updateHpBar(container, hp, maxHp) {
+    if (container && container.hpBar) {
+        let pct = Math.max(0, hp / maxHp);
+        container.hpBar.width = 40 * pct;
+    }
 }
 
 function initJoystick() {
@@ -248,12 +355,9 @@ function initJoystick() {
         zone: document.getElementById('joystick-zone'),
         mode: 'static',
         position: { left: '70px', bottom: '70px' },
-        color: 'white',
-        size: 110
+        color: 'white', size: 110
     };
-
     const manager = nipplejs.create(options);
-
     manager.on('move', (evt, data) => {
         if (data.vector) {
             moveVector.x = data.vector.x;
@@ -261,11 +365,7 @@ function initJoystick() {
             if (player) player.setRotation(data.angle.radian);
         }
     });
-
-    manager.on('end', () => {
-        moveVector.x = 0;
-        moveVector.y = 0;
-    });
+    manager.on('end', () => { moveVector.x = 0; moveVector.y = 0; });
 }
 
 function spawnGem(scene, gemData) {
@@ -275,22 +375,17 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gem);
 }
 
-function addOtherPlayer(scene, info) {
-    let p = scene.add.container(info.x, info.y);
-    let body = scene.add.circle(0, 0, 18, 0xef4444);
-    let bow = scene.add.rectangle(12, 0, 10, 6, 0xb91c1c);
-    p.add([body, bow]);
-    otherPlayers[info.id] = p;
-}
-
-function fireArrowLocal(scene, x, y, angle, isOwner) {
+function fireArrowLocal(scene, x, y, angle, isOwner, ownerId) {
     let arrow = scene.add.rectangle(x, y, 16, 4, 0xf59e0b);
     scene.physics.world.enable(arrow);
     arrow.setRotation(angle);
     scene.physics.velocityFromRotation(angle, 700, arrow.body.velocity);
 
     if (isOwner) {
+        arrowsGroup.add(arrow);
         socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 700 });
+    } else {
+        otherArrowsGroup.add(arrow);
     }
 
     scene.time.delayedCall(1500, () => arrow.destroy());
