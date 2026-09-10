@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>弓箭手大作戰：雙端對戰版</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -197,10 +197,18 @@ let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
 let playerStats = { name: '玩家', level: 1, exp: 0, hp: 100, maxHp: 100, arrowCount: 1, fireRate: 300 };
 
-// 精準判斷手機螢幕方向
+// 修正後的手機螢幕方向檢測
 function checkOrientation() {
     const notice = document.getElementById('rotate-notice');
-    if (window.innerWidth < window.innerHeight && window.innerWidth < 768) {
+    let isPortrait = false;
+    
+    if (window.matchMedia) {
+        isPortrait = window.matchMedia("(orientation: portrait)").matches;
+    } else {
+        isPortrait = window.innerHeight > window.innerWidth;
+    }
+
+    if (isPortrait && window.innerWidth < 1024) {
         notice.style.display = 'flex';
     } else {
         notice.style.display = 'none';
@@ -208,7 +216,7 @@ function checkOrientation() {
 }
 window.addEventListener('resize', checkOrientation);
 window.addEventListener('orientationchange', checkOrientation);
-checkOrientation();
+setTimeout(checkOrientation, 300);
 
 function startGame() {
     let nameInput = document.getElementById('player-name-input').value.trim();
@@ -237,7 +245,7 @@ function preload() {}
 function create() {
     sceneRef = this;
 
-    // 動態繪製箭矢貼圖，解決物理組無法給 Container 移動速度的問題
+    // 生成箭矢貼圖
     let arrowGfx = sceneRef.make.graphics({x: 0, y: 0, add: false});
     arrowGfx.lineStyle(2, 0xd97706, 1);
     arrowGfx.lineBetween(0, 5, 18, 5);
@@ -250,7 +258,7 @@ function create() {
     sceneRef.cameras.main.setBounds(0, 0, 1600, 1200);
     sceneRef.physics.world.setBounds(0, 0, 1600, 1200);
 
-    // 棋盤質感背景
+    // 繪製棋盤背景
     let bgGraphics = sceneRef.add.graphics();
     bgGraphics.fillStyle(0x1e293b, 1);
     bgGraphics.fillRect(0, 0, 1600, 1200);
@@ -346,30 +354,6 @@ function create() {
         }
     });
 
-    // 點擊發射子彈
-    sceneRef.input.on('pointerdown', (pointer) => {
-        if (!player) return;
-        if (pointer.x < 180 && pointer.y > window.innerHeight - 180) return;
-
-        let now = sceneRef.time.now;
-        if (now - lastFired > playerStats.fireRate) {
-            lastFired = now;
-            let angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.worldX, pointer.worldY);
-            
-            if (player.characterGraphics) {
-                player.characterGraphics.setRotation(angle);
-            }
-
-            if (playerStats.arrowCount === 1) {
-                fireArrowLocal(sceneRef, player.x, player.y, angle, true, socket.id);
-            } else {
-                fireArrowLocal(sceneRef, player.x, player.y, angle - 0.2, true, socket.id);
-                fireArrowLocal(sceneRef, player.x, player.y, angle, true, socket.id);
-                fireArrowLocal(sceneRef, player.x, player.y, angle + 0.2, true, socket.id);
-            }
-        }
-    });
-
     // 擊中判定
     sceneRef.physics.add.overlap(arrowsGroup, sceneRef.physics.world.bodies, (arrow, body) => {
         let targetContainer = body.gameObject;
@@ -383,6 +367,7 @@ function create() {
 function update() {
     if (!player || !player.body) return;
 
+    // 移動邏輯
     let speed = 240;
     let vx = 0, vy = 0;
 
@@ -397,6 +382,32 @@ function update() {
     }
 
     player.body.setVelocity(vx, vy);
+
+    // 點擊/觸控射擊邏輯
+    let pointer = sceneRef.input.activePointer;
+    if (pointer.isDown) {
+        // 避開搖桿區域
+        let isJoystickArea = (pointer.x < 180 && pointer.y > (window.innerHeight - 180));
+        if (!isJoystickArea) {
+            let now = sceneRef.time.now;
+            if (now - lastFired > playerStats.fireRate) {
+                lastFired = now;
+                let angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.worldX, pointer.worldY);
+                
+                if (player.characterGraphics) {
+                    player.characterGraphics.setRotation(angle);
+                }
+
+                if (playerStats.arrowCount === 1) {
+                    fireArrowLocal(sceneRef, player.x, player.y, angle, true, socket.id);
+                } else {
+                    fireArrowLocal(sceneRef, player.x, player.y, angle - 0.2, true, socket.id);
+                    fireArrowLocal(sceneRef, player.x, player.y, angle, true, socket.id);
+                    fireArrowLocal(sceneRef, player.x, player.y, angle + 0.2, true, socket.id);
+                }
+            }
+        }
+    }
 
     let rotation = player.characterGraphics ? player.characterGraphics.rotation : 0;
     socket.emit('playerInput', { x: player.x, y: player.y, rotation: rotation });
@@ -513,7 +524,6 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gemContainer);
 }
 
-// 使用 Sprite 繪製並推進箭矢
 function fireArrowLocal(scene, x, y, angle, isOwner, ownerId) {
     let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
