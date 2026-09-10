@@ -91,18 +91,22 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 吃寶石
-    socket.on('collectGem', (gemId) => {
-        const index = gems.findIndex(g => g.id === gemId);
-        if (index !== -1) {
-            gems[index] = {
-                id: gemId,
-                x: Math.random() * 1500 + 50,
-                y: Math.random() * 1100 + 50
-            };
-            io.emit('gemSpawn', gems[index]);
-        }
-    });
+   // 吃寶石
+       socket.on('collectGem', (gemId) => {
+           const index = gems.findIndex(g => g.id === gemId);
+           if (index !== -1) {
+               // 先通知所有玩家該寶石已被吃掉
+               io.emit('gemCollected', gemId);
+   
+               // 更新寶石位置並重新生成
+               gems[index] = {
+                   id: gemId,
+                   x: Math.random() * 1500 + 50,
+                   y: Math.random() * 1100 + 50
+               };
+               io.emit('gemSpawn', gems[index]);
+           }
+       });
 
     // 離線處理
     socket.on('disconnect', () => {

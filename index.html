@@ -14,134 +14,51 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0f172a; touch-action: none; }
         #game-container { width: 100vw; height: 100vh; position: relative; }
         
-        /* 手機直立時的提醒提示 */
         #rotate-notice {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.98);
-            color: #38bdf8;
-            z-index: 9999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.98); color: #38bdf8; z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 20px; font-weight: bold;
         }
-        #rotate-notice i {
-            font-size: 60px;
-            margin-bottom: 20px;
-            animation: rotateAnim 2s infinite ease-in-out;
-            color: #fbbf24;
-        }
-        @keyframes rotateAnim {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
-            100% { transform: rotate(0deg); }
-        }
+        #rotate-notice i { font-size: 60px; margin-bottom: 20px; animation: rotateAnim 2s infinite ease-in-out; color: #fbbf24; }
+        @keyframes rotateAnim { 0% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }
 
-        /* 登入視窗 */
         #login-modal {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(16px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px);
+            display: flex; justify-content: center; align-items: center; z-index: 200;
         }
         .login-box {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border: 2px solid rgba(56, 189, 248, 0.5);
-            padding: 35px 30px;
-            border-radius: 24px;
-            text-align: center;
-            color: #fff;
-            width: 90%;
-            max-width: 380px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.2);
+            background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid rgba(56, 189, 248, 0.5);
+            padding: 35px 30px; border-radius: 24px; text-align: center; color: #fff; width: 90%; max-width: 380px;
         }
-        .login-box h2 {
-            margin-top: 0; margin-bottom: 25px; color: #38bdf8;
-            font-size: 26px; letter-spacing: 1px;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-        }
+        .login-box h2 { margin-top: 0; margin-bottom: 25px; color: #38bdf8; font-size: 26px; }
         .login-box input {
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 1px solid #334155;
-            background: rgba(15, 23, 42, 0.8);
-            color: #fff;
-            font-size: 16px;
-            margin-bottom: 25px;
-            text-align: center;
-            outline: none;
-            transition: 0.3s;
-        }
-        .login-box input:focus {
-            border-color: #38bdf8;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #334155;
+            background: rgba(15, 23, 42, 0.8); color: #fff; font-size: 16px; margin-bottom: 25px; text-align: center; outline: none;
         }
         .login-box button {
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: none;
-            background: linear-gradient(135deg, #38bdf8, #0284c7);
-            color: #fff;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
-            transition: 0.2s;
+            width: 100%; padding: 14px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #38bdf8, #0284c7); color: #fff; font-size: 18px; font-weight: bold; cursor: pointer;
         }
-        .login-box button:active { transform: scale(0.98); }
 
-        /* 頂部 HUD 資訊欄 */
         #top-gui {
-            position: absolute;
-            top: 15px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 20px;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 10px 25px; border-radius: 50px;
-            color: #fff; z-index: 10;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 20px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15); padding: 10px 25px; border-radius: 50px; color: #fff; z-index: 10;
         }
-        .stat-box { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; letter-spacing: 0.5px; }
+        .stat-box { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
         #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 140px; height: 140px; z-index: 20; }
         
-        /* 升級視窗 */
         #upgrade-modal {
-            display: none; position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border: 2px solid #38bdf8;
-            padding: 25px; border-radius: 24px;
-            text-align: center; color: #fff; z-index: 100;
-            width: 85%; max-width: 400px;
-            box-shadow: 0 0 50px rgba(56, 189, 248, 0.3);
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 2px solid #38bdf8;
+            padding: 25px; border-radius: 24px; text-align: center; color: #fff; z-index: 100; width: 85%; max-width: 400px;
         }
         .skill-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
         .skill-card {
-            background: rgba(30, 41, 59, 0.8); border: 1px solid #334155;
-            padding: 14px; border-radius: 16px; cursor: pointer;
-            display: flex; align-items: center; gap: 15px;
-            transition: 0.2s;
+            background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; padding: 14px; border-radius: 16px;
+            cursor: pointer; display: flex; align-items: center; gap: 15px;
         }
-        .skill-card:hover {
-            border-color: #38bdf8;
-            background: rgba(56, 189, 248, 0.15);
-            transform: translateY(-2px);
-        }
-        .skill-card i { font-size: 26px; color: #38bdf8; }
     </style>
 </head>
 <body>
@@ -172,15 +89,15 @@
         <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:#facc15;"></i> 等級提升！選擇能力</h3>
         <div class="skill-grid">
             <div class="skill-card" onclick="applySkill('triple')">
-                <i class="fa-solid fa-burst"></i>
+                <i class="fa-solid fa-burst" style="font-size:24px;color:#38bdf8;"></i>
                 <div style="text-align:left;"><b>三連散射</b><br><small style="color:#94a3b8;">一次發射 3 發箭矢</small></div>
             </div>
             <div class="skill-card" onclick="applySkill('speed')">
-                <i class="fa-solid fa-gauge-high"></i>
+                <i class="fa-solid fa-gauge-high" style="font-size:24px;color:#38bdf8;"></i>
                 <div style="text-align:left;"><b>攻擊射速 UP</b><br><small style="color:#94a3b8;">大幅降低攻擊間隔</small></div>
             </div>
             <div class="skill-card" onclick="applySkill('hp')">
-                <i class="fa-solid fa-shield-halved"></i>
+                <i class="fa-solid fa-shield-halved" style="font-size:24px;color:#38bdf8;"></i>
                 <div style="text-align:left;"><b>生命上限 +50</b><br><small style="color:#94a3b8;">提高生存能力並補血</small></div>
             </div>
         </div>
@@ -190,29 +107,18 @@
 <script>
 const socket = io();
 let game, sceneRef;
-let player, otherPlayers = {};
+let player, otherPlayers = {}, otherPlayersGroup;
 let arrowsGroup, otherArrowsGroup, gemsGroup;
 let cursors, wasd;
 let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
 let playerStats = { name: '玩家', level: 1, exp: 0, hp: 100, maxHp: 100, arrowCount: 1, fireRate: 300 };
 
-// 修正後的手機螢幕方向檢測
 function checkOrientation() {
     const notice = document.getElementById('rotate-notice');
-    let isPortrait = false;
-    
-    if (window.matchMedia) {
-        isPortrait = window.matchMedia("(orientation: portrait)").matches;
-    } else {
-        isPortrait = window.innerHeight > window.innerWidth;
-    }
-
-    if (isPortrait && window.innerWidth < 1024) {
-        notice.style.display = 'flex';
-    } else {
-        notice.style.display = 'none';
-    }
+    let isPortrait = window.matchMedia ? window.matchMedia("(orientation: portrait)").matches : (window.innerHeight > window.innerWidth);
+    if (isPortrait && window.innerWidth < 1024) notice.style.display = 'flex';
+    else notice.style.display = 'none';
 }
 window.addEventListener('resize', checkOrientation);
 window.addEventListener('orientationchange', checkOrientation);
@@ -222,7 +128,6 @@ function startGame() {
     let nameInput = document.getElementById('player-name-input').value.trim();
     if (nameInput) playerStats.name = nameInput;
     document.getElementById('login-modal').style.display = 'none';
-
     initGame();
     socket.emit('joinGame', { name: playerStats.name });
 }
@@ -235,17 +140,14 @@ function initGame() {
         parent: 'game-container',
         scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
         physics: { default: 'arcade', arcade: { debug: false } },
-        scene: { preload: preload, create: create, update: update }
+        scene: { create: create, update: update }
     };
     game = new Phaser.Game(config);
 }
 
-function preload() {}
-
 function create() {
     sceneRef = this;
 
-    // 生成箭矢貼圖
     let arrowGfx = sceneRef.make.graphics({x: 0, y: 0, add: false});
     arrowGfx.lineStyle(2, 0xd97706, 1);
     arrowGfx.lineBetween(0, 5, 18, 5);
@@ -258,11 +160,9 @@ function create() {
     sceneRef.cameras.main.setBounds(0, 0, 1600, 1200);
     sceneRef.physics.world.setBounds(0, 0, 1600, 1200);
 
-    // 繪製棋盤背景
     let bgGraphics = sceneRef.add.graphics();
     bgGraphics.fillStyle(0x1e293b, 1);
     bgGraphics.fillRect(0, 0, 1600, 1200);
-    
     for (let x = 0; x < 1600; x += 80) {
         for (let y = 0; y < 1200; y += 80) {
             let isEven = ((x / 80) + (y / 80)) % 2 === 0;
@@ -271,25 +171,21 @@ function create() {
         }
     }
 
-    bgGraphics.lineStyle(4, 0x38bdf8, 0.4);
-    bgGraphics.strokeRect(0, 0, 1600, 1200);
-
     arrowsGroup = sceneRef.physics.add.group();
     otherArrowsGroup = sceneRef.physics.add.group();
     gemsGroup = sceneRef.physics.add.group();
+    otherPlayersGroup = sceneRef.physics.add.group(); // 建立敵人碰撞專用群組
 
     cursors = sceneRef.input.keyboard.createCursorKeys();
     wasd = sceneRef.input.keyboard.addKeys({
-        up: Phaser.Input.Keyboard.KeyCodes.W,
-        down: Phaser.Input.Keyboard.KeyCodes.S,
-        left: Phaser.Input.Keyboard.KeyCodes.A,
-        right: Phaser.Input.Keyboard.KeyCodes.D
+        up: Phaser.Input.Keyboard.KeyCodes.W, down: Phaser.Input.Keyboard.KeyCodes.S,
+        left: Phaser.Input.Keyboard.KeyCodes.A, right: Phaser.Input.Keyboard.KeyCodes.D
     });
 
     initJoystick();
 
     socket.on('initSelf', (data) => {
-        player = createPlayerContainer(sceneRef, data.x, data.y, data.name, 0x38bdf8, true);
+        player = createPlayerContainer(sceneRef, data.x, data.y, data.name, 0x38bdf8);
         player.id = socket.id;
         sceneRef.cameras.main.startFollow(player, true, 0.1, 0.1);
     });
@@ -297,16 +193,14 @@ function create() {
     socket.on('currentPlayers', (players) => {
         Object.keys(players).forEach((id) => {
             if (id !== socket.id && !otherPlayers[id]) {
-                otherPlayers[id] = createPlayerContainer(sceneRef, players[id].x, players[id].y, players[id].name, 0xef4444, false);
-                otherPlayers[id].id = id;
+                addOtherPlayer(id, players[id]);
             }
         });
     });
 
     socket.on('newPlayer', (info) => {
         if (!otherPlayers[info.id] && info.id !== socket.id) {
-            otherPlayers[info.id] = createPlayerContainer(sceneRef, info.x, info.y, info.name, 0xef4444, false);
-            otherPlayers[info.id].id = info.id;
+            addOtherPlayer(info.id, info);
         }
     });
 
@@ -328,6 +222,9 @@ function create() {
 
     socket.on('gemsData', (gems) => { gems.forEach(g => spawnGem(sceneRef, g)); });
     socket.on('gemSpawn', (gem) => { spawnGem(sceneRef, gem); });
+    socket.on('gemCollected', (gemId) => {
+        gemsGroup.getChildren().forEach(g => { if (g.id === gemId) g.destroy(); });
+    });
 
     socket.on('arrowFired', (data) => {
         fireArrowLocal(sceneRef, data.x, data.y, data.angle, false, data.ownerId);
@@ -354,9 +251,8 @@ function create() {
         }
     });
 
-    // 擊中判定
-    sceneRef.physics.add.overlap(arrowsGroup, sceneRef.physics.world.bodies, (arrow, body) => {
-        let targetContainer = body.gameObject;
+    // 正確監聽箭矢擊中敵人
+    sceneRef.physics.add.overlap(arrowsGroup, otherPlayersGroup, (arrow, targetContainer) => {
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
             socket.emit('hitPlayer', targetContainer.id);
             arrow.destroy();
@@ -364,10 +260,16 @@ function create() {
     });
 }
 
+function addOtherPlayer(id, data) {
+    let p = createPlayerContainer(sceneRef, data.x, data.y, data.name, 0xef4444);
+    p.id = id;
+    otherPlayers[id] = p;
+    otherPlayersGroup.add(p);
+}
+
 function update() {
     if (!player || !player.body) return;
 
-    // 移動邏輯
     let speed = 240;
     let vx = 0, vy = 0;
 
@@ -383,20 +285,18 @@ function update() {
 
     player.body.setVelocity(vx, vy);
 
-    // 點擊/觸控射擊邏輯
+    // 點擊判定，避開搖桿區域
     let pointer = sceneRef.input.activePointer;
     if (pointer.isDown) {
-        // 避開搖桿區域
-        let isJoystickArea = (pointer.x < 180 && pointer.y > (window.innerHeight - 180));
-        if (!isJoystickArea) {
+        let zone = document.getElementById('joystick-zone').getBoundingClientRect();
+        let isJoystickTouch = (pointer.x >= zone.left && pointer.x <= zone.right && pointer.y >= zone.top && pointer.y <= zone.bottom);
+
+        if (!isJoystickTouch) {
             let now = sceneRef.time.now;
             if (now - lastFired > playerStats.fireRate) {
                 lastFired = now;
                 let angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.worldX, pointer.worldY);
-                
-                if (player.characterGraphics) {
-                    player.characterGraphics.setRotation(angle);
-                }
+                if (player.characterGraphics) player.characterGraphics.setRotation(angle);
 
                 if (playerStats.arrowCount === 1) {
                     fireArrowLocal(sceneRef, player.x, player.y, angle, true, socket.id);
@@ -419,43 +319,22 @@ function update() {
     });
 }
 
-function createPlayerContainer(scene, x, y, nameText, colorHex, isSelf) {
+function createPlayerContainer(scene, x, y, nameText, colorHex) {
     let container = scene.add.container(x, y);
 
     let shadow = scene.add.graphics();
-    shadow.fillStyle(0x000000, 0.3);
-    shadow.fillEllipse(0, 18, 36, 14);
+    shadow.fillStyle(0x000000, 0.3); shadow.fillEllipse(0, 18, 36, 14);
 
     let charGfx = scene.add.graphics();
-    
     charGfx.lineStyle(3, 0xf59e0b, 1);
-    charGfx.beginPath();
-    charGfx.arc(12, 0, 16, -Math.PI/2.5, Math.PI/2.5, false);
-    charGfx.strokePath();
-    charGfx.lineStyle(1, 0xffffff, 0.8);
-    charGfx.lineBetween(12, -14, 12, 14);
-
-    charGfx.fillStyle(colorHex, 1);
-    charGfx.fillCircle(0, 0, 20);
-    charGfx.lineStyle(3, 0xffffff, 0.9);
-    charGfx.strokeCircle(0, 0, 20);
-
-    charGfx.fillStyle(0xffffff, 1);
-    charGfx.fillCircle(8, -6, 4);
-    charGfx.fillCircle(8, 6, 4);
-    charGfx.fillStyle(0x0f172a, 1);
-    charGfx.fillCircle(10, -6, 2);
-    charGfx.fillCircle(10, 6, 2);
+    charGfx.beginPath(); charGfx.arc(12, 0, 16, -Math.PI/2.5, Math.PI/2.5, false); charGfx.strokePath();
+    charGfx.fillStyle(colorHex, 1); charGfx.fillCircle(0, 0, 20);
+    charGfx.lineStyle(3, 0xffffff, 0.9); charGfx.strokeCircle(0, 0, 20);
+    charGfx.fillStyle(0xffffff, 1); charGfx.fillCircle(8, -6, 4); charGfx.fillCircle(8, 6, 4);
 
     container.characterGraphics = charGfx;
 
-    let name = scene.add.text(0, -42, nameText, {
-        font: 'bold 13px Arial',
-        fill: '#ffffff',
-        stroke: '#0f172a',
-        strokeThickness: 4
-    }).setOrigin(0.5);
-
+    let name = scene.add.text(0, -42, nameText, { font: 'bold 13px Arial', fill: '#ffffff', stroke: '#0f172a', strokeThickness: 4 }).setOrigin(0.5);
     let hpBg = scene.add.rectangle(0, -28, 44, 8, 0x0f172a).setStrokeStyle(1, 0x475569);
     let hpBar = scene.add.rectangle(-21, -28, 42, 6, 0x10b981).setOrigin(0, 0.5);
 
@@ -473,27 +352,20 @@ function updateHpBar(container, hp, maxHp) {
     if (container && container.hpBar) {
         let pct = Math.max(0, hp / maxHp);
         container.hpBar.width = 42 * pct;
-        if (pct < 0.3) container.hpBar.setFillStyle(0xef4444);
-        else if (pct < 0.6) container.hpBar.setFillStyle(0xf59e0b);
-        else container.hpBar.setFillStyle(0x10b981);
     }
 }
 
 function initJoystick() {
-    const options = {
+    const manager = nipplejs.create({
         zone: document.getElementById('joystick-zone'),
-        mode: 'static',
-        position: { left: '70px', bottom: '70px' },
+        mode: 'static', position: { left: '70px', bottom: '70px' },
         color: 'white', size: 110
-    };
-    const manager = nipplejs.create(options);
+    });
     manager.on('move', (evt, data) => {
         if (data.vector) {
             moveVector.x = data.vector.x;
             moveVector.y = -data.vector.y;
-            if (player && player.characterGraphics) {
-                player.characterGraphics.setRotation(data.angle.radian);
-            }
+            if (player && player.characterGraphics) player.characterGraphics.setRotation(data.angle.radian);
         }
     });
     manager.on('end', () => { moveVector.x = 0; moveVector.y = 0; });
@@ -501,33 +373,19 @@ function initJoystick() {
 
 function spawnGem(scene, gemData) {
     let gemContainer = scene.add.container(gemData.x, gemData.y);
-    
     let gemGfx = scene.add.graphics();
-    gemGfx.fillStyle(0xfacc15, 1);
-    gemGfx.fillGradientStyle(0xfde047, 0xfde047, 0xca8a04, 0xca8a04, 1);
-    
-    gemGfx.beginPath();
-    gemGfx.moveTo(0, -8);
-    gemGfx.lineTo(7, 0);
-    gemGfx.lineTo(0, 8);
-    gemGfx.lineTo(-7, 0);
-    gemGfx.closePath();
-    gemGfx.fillPath();
-    gemGfx.lineStyle(1, 0xffffff, 0.8);
-    gemGfx.strokePath();
-
+    gemGfx.fillStyle(0xfacc15, 1); gemGfx.fillCircle(0, 0, 7);
     gemContainer.add(gemGfx);
     gemContainer.id = gemData.id;
 
     scene.physics.world.enable(gemContainer);
-    gemContainer.body.setCircle(8, -8, -8);
+    gemContainer.body.setCircle(7, -7, -7);
     gemsGroup.add(gemContainer);
 }
 
-function fireArrowLocal(scene, x, y, angle, isOwner, ownerId) {
+function fireArrowLocal(scene, x, y, angle, isOwner) {
     let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
-
     scene.physics.velocityFromRotation(angle, 850, arrow.body.velocity);
 
     if (isOwner) {
@@ -537,11 +395,7 @@ function fireArrowLocal(scene, x, y, angle, isOwner, ownerId) {
         otherArrowsGroup.add(arrow);
     }
 
-    scene.time.delayedCall(1200, () => {
-        if (arrow && arrow.active) {
-            arrow.destroy();
-        }
-    });
+    scene.time.delayedCall(1200, () => { if (arrow && arrow.active) arrow.destroy(); });
 }
 
 function gainExp(amount) {
@@ -564,7 +418,6 @@ function applySkill(type) {
     if (type === 'triple') playerStats.arrowCount = 3;
     if (type === 'speed') playerStats.fireRate = 150;
     if (type === 'hp') { playerStats.maxHp += 50; playerStats.hp += 50; }
-
     document.getElementById('upgrade-modal').style.display = 'none';
     updateGUI();
 }
