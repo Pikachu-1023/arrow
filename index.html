@@ -41,10 +41,6 @@
             100% { transform: rotate(0deg); }
         }
 
-        @media screen and (orientation: portrait) {
-            #rotate-notice { display: flex !important; }
-        }
-
         /* 登入視窗 */
         #login-modal {
             position: absolute;
@@ -201,6 +197,19 @@ let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
 let playerStats = { name: '玩家', level: 1, exp: 0, hp: 100, maxHp: 100, arrowCount: 1, fireRate: 300 };
 
+// 精準判斷手機螢幕方向
+function checkOrientation() {
+    const notice = document.getElementById('rotate-notice');
+    if (window.innerWidth < window.innerHeight && window.innerWidth < 768) {
+        notice.style.display = 'flex';
+    } else {
+        notice.style.display = 'none';
+    }
+}
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
+checkOrientation();
+
 function startGame() {
     let nameInput = document.getElementById('player-name-input').value.trim();
     if (nameInput) playerStats.name = nameInput;
@@ -228,15 +237,24 @@ function preload() {}
 function create() {
     sceneRef = this;
 
+    // 動態繪製箭矢貼圖，解決物理組無法給 Container 移動速度的問題
+    let arrowGfx = sceneRef.make.graphics({x: 0, y: 0, add: false});
+    arrowGfx.lineStyle(2, 0xd97706, 1);
+    arrowGfx.lineBetween(0, 5, 18, 5);
+    arrowGfx.fillStyle(0xf1f5f9, 1);
+    arrowGfx.fillTriangle(18, 1, 24, 5, 18, 9);
+    arrowGfx.fillStyle(0xef4444, 1);
+    arrowGfx.fillRect(0, 2, 4, 6);
+    arrowGfx.generateTexture('arrowTex', 26, 10);
+
     sceneRef.cameras.main.setBounds(0, 0, 1600, 1200);
     sceneRef.physics.world.setBounds(0, 0, 1600, 1200);
 
-    // 產生動態質感的精緻背景與地塊
+    // 棋盤質感背景
     let bgGraphics = sceneRef.add.graphics();
     bgGraphics.fillStyle(0x1e293b, 1);
     bgGraphics.fillRect(0, 0, 1600, 1200);
     
-    // 木格棋盤風格背景
     for (let x = 0; x < 1600; x += 80) {
         for (let y = 0; y < 1200; y += 80) {
             let isEven = ((x / 80) + (y / 80)) % 2 === 0;
@@ -245,7 +263,6 @@ function create() {
         }
     }
 
-    // 地圖外圍網格與線條裝飾
     bgGraphics.lineStyle(4, 0x38bdf8, 0.4);
     bgGraphics.strokeRect(0, 0, 1600, 1200);
 
@@ -263,7 +280,6 @@ function create() {
 
     initJoystick();
 
-    // Socket 監聽
     socket.on('initSelf', (data) => {
         player = createPlayerContainer(sceneRef, data.x, data.y, data.name, 0x38bdf8, true);
         player.id = socket.id;
@@ -354,7 +370,7 @@ function create() {
         }
     });
 
-    // 擊中判定：我方箭矢命中敵方玩家
+    // 擊中判定
     sceneRef.physics.add.overlap(arrowsGroup, sceneRef.physics.world.bodies, (arrow, body) => {
         let targetContainer = body.gameObject;
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
@@ -385,7 +401,6 @@ function update() {
     let rotation = player.characterGraphics ? player.characterGraphics.rotation : 0;
     socket.emit('playerInput', { x: player.x, y: player.y, rotation: rotation });
 
-    // 拾取寶石
     sceneRef.physics.overlap(player, gemsGroup, (p, gem) => {
         socket.emit('collectGem', gem.id);
         gem.destroy();
@@ -393,19 +408,15 @@ function update() {
     });
 }
 
-// 繪製精緻的 2D 角色 (包含陰影、圓形身體與弓箭)
 function createPlayerContainer(scene, x, y, nameText, colorHex, isSelf) {
     let container = scene.add.container(x, y);
 
-    // 1. 底弧陰影
     let shadow = scene.add.graphics();
     shadow.fillStyle(0x000000, 0.3);
     shadow.fillEllipse(0, 18, 36, 14);
 
-    // 2. 角色身體與弓箭組合圖形
     let charGfx = scene.add.graphics();
     
-    // 弓箭
     charGfx.lineStyle(3, 0xf59e0b, 1);
     charGfx.beginPath();
     charGfx.arc(12, 0, 16, -Math.PI/2.5, Math.PI/2.5, false);
@@ -413,13 +424,11 @@ function createPlayerContainer(scene, x, y, nameText, colorHex, isSelf) {
     charGfx.lineStyle(1, 0xffffff, 0.8);
     charGfx.lineBetween(12, -14, 12, 14);
 
-    // 身體圓形主體
     charGfx.fillStyle(colorHex, 1);
     charGfx.fillCircle(0, 0, 20);
     charGfx.lineStyle(3, 0xffffff, 0.9);
     charGfx.strokeCircle(0, 0, 20);
 
-    // 眼睛
     charGfx.fillStyle(0xffffff, 1);
     charGfx.fillCircle(8, -6, 4);
     charGfx.fillCircle(8, 6, 4);
@@ -429,7 +438,6 @@ function createPlayerContainer(scene, x, y, nameText, colorHex, isSelf) {
 
     container.characterGraphics = charGfx;
 
-    // 3. 名字標籤
     let name = scene.add.text(0, -42, nameText, {
         font: 'bold 13px Arial',
         fill: '#ffffff',
@@ -437,7 +445,6 @@ function createPlayerContainer(scene, x, y, nameText, colorHex, isSelf) {
         strokeThickness: 4
     }).setOrigin(0.5);
 
-    // 4. 精緻血條
     let hpBg = scene.add.rectangle(0, -28, 44, 8, 0x0f172a).setStrokeStyle(1, 0x475569);
     let hpBar = scene.add.rectangle(-21, -28, 42, 6, 0x10b981).setOrigin(0, 0.5);
 
@@ -481,7 +488,6 @@ function initJoystick() {
     manager.on('end', () => { moveVector.x = 0; moveVector.y = 0; });
 }
 
-// 產生帶發光質感的寶石
 function spawnGem(scene, gemData) {
     let gemContainer = scene.add.container(gemData.x, gemData.y);
     
@@ -489,7 +495,6 @@ function spawnGem(scene, gemData) {
     gemGfx.fillStyle(0xfacc15, 1);
     gemGfx.fillGradientStyle(0xfde047, 0xfde047, 0xca8a04, 0xca8a04, 1);
     
-    // 繪製菱形寶石
     gemGfx.beginPath();
     gemGfx.moveTo(0, -8);
     gemGfx.lineTo(7, 0);
@@ -508,46 +513,23 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gemContainer);
 }
 
-// 精緻箭矢發射（修正子彈發射方向與物理速度）
+// 使用 Sprite 繪製並推進箭矢
 function fireArrowLocal(scene, x, y, angle, isOwner, ownerId) {
-    let arrowContainer = scene.add.container(x, y);
+    let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
+    arrow.setRotation(angle);
 
-    let arrowGfx = scene.add.graphics();
-    // 箭桿
-    arrowGfx.lineStyle(2, 0xd97706, 1);
-    arrowGfx.lineBetween(-10, 0, 8, 0);
-    // 箭頭
-    arrowGfx.fillStyle(0xf1f5f9, 1);
-    arrowGfx.beginPath();
-    arrowGfx.moveTo(12, 0);
-    arrowGfx.lineTo(6, -4);
-    arrowGfx.lineTo(6, 4);
-    arrowGfx.closePath();
-    arrowGfx.fillPath();
-    // 箭羽
-    arrowGfx.fillStyle(0xef4444, 1);
-    arrowGfx.fillRect(-12, -3, 4, 6);
-
-    arrowContainer.add(arrowGfx);
-    arrowContainer.setRotation(angle);
-
-    scene.physics.world.enable(arrowContainer);
-    arrowContainer.body.setCircle(6, -6, -6);
-
-    // 賦予正確的物理向量速度
-    scene.physics.velocityFromRotation(angle, 800, arrowContainer.body.velocity);
+    scene.physics.velocityFromRotation(angle, 850, arrow.body.velocity);
 
     if (isOwner) {
-        arrowsGroup.add(arrowContainer);
-        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 800 });
+        arrowsGroup.add(arrow);
+        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 850 });
     } else {
-        otherArrowsGroup.add(arrowContainer);
+        otherArrowsGroup.add(arrow);
     }
 
-    // 飛出 1.4 秒後銷毀
-    scene.time.delayedCall(1400, () => {
-        if (arrowContainer && arrowContainer.active) {
-            arrowContainer.destroy();
+    scene.time.delayedCall(1200, () => {
+        if (arrow && arrow.active) {
+            arrow.destroy();
         }
     });
 }
