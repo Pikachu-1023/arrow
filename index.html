@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>弓箭手大作戰：雙端對戰版</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
+    
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; -webkit-user-select: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0f172a; touch-action: none; }
+        #game-container { width: 100vw; height: 100vh; position: relative; }
+        #top-gui {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 20px;
+            border-radius: 50px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            color: #fff;
+            z-index: 10;
+        }
+        .stat-box { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; }
+        .stat-box i { color: #38bdf8; }
+        #joystick-zone {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 140px;
+            height: 140px;
+            z-index: 20;
+        }
+        #upgrade-modal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid #38bdf8;
+            padding: 20px;
+            border-radius: 24px;
+            text-align: center;
+            color: #fff;
+            z-index: 100;
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.3);
+            width: 85%;
+            max-width: 400px;
+        }
+        .skill-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .skill-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s;
+        }
+        .skill-card:active { background: #334155; border-color: #38bdf8; }
+        .skill-card i { font-size: 24px; color: #38bdf8; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="top-gui">
+        <div class="stat-box"><i class="fa-solid fa-crown"></i> LV.<span id="gui-level">1</span></div>
+        <div class="stat-box"><i class="fa-solid fa-bolt"></i> <span id="gui-exp">0</span></div>
+        <div class="stat-box"><i class="fa-solid fa-heart" style="color:#ef4444;"></i> <span id="gui-hp">100/100</span></div>
+    </div>
+
+    <div id="joystick-zone"></div>
+
+    <div id="upgrade-modal">
+        <h3><i class="fa-solid fa-wand-magic-sparkles"></i> 等級提升！選擇能力</h3>
+        <div class="skill-grid">
+            <div class="skill-card" onclick="applySkill('triple')">
+                <i class="fa-solid fa-burst"></i>
+                <div><b>三連散射</b><br><small style="color:#94a3b8;">一次發射 3 發箭矢</small></div>
+            </div>
+            <div class="skill-card" onclick="applySkill('speed')">
+                <i class="fa-solid fa-gauge-high"></i>
+                <div><b>攻擊射速 UP</b><br><small style="color:#94a3b8;">大幅降低攻擊間隔</small></div>
+            </div>
+            <div class="skill-card" onclick="applySkill('hp')">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div><b>生命上限 +50</b><br><small style="color:#94a3b8;">提高生存能力並補血</small></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const socket = io();
+
+const config = {
+    type: Phaser.AUTO,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    parent: 'game-container',
+    scale: {
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    },
+    physics: {
+        default: 'arcade',
+        arcade: { debug: false }
+    },
+    scene: { preload: preload, create: create, update: update }
+};
+
+const game = new Phaser.Game(config);
+
+let player;
+let otherPlayers = {};
+let arrows;
+let gemsGroup;
+let cursors;
+let wasd;
+let lastFired = 0;
+let moveVector = { x: 0, y: 0 };
+let playerStats = { level: 1, exp: 0, hp: 100, maxHp: 100, arrowCount: 1, fireRate: 300 };
+
+function preload() {}
+
+function create() {
+    const scene = this;
+
+    scene.cameras.main.setBounds(0, 0, 1600, 1200);
+    scene.physics.world.setBounds(0, 0, 1600, 1200);
+
+    let graphics = scene.add.graphics();
+    graphics.lineStyle(1, 0x334155, 0.8);
+    for (let x = 0; x < 1600; x += 40) graphics.lineBetween(x, 0, x, 1200);
+    for (let y = 0; y < 1200; y += 40) graphics.lineBetween(0, y, 1600, y);
+
+    arrows = scene.physics.add.group();
+    gemsGroup = scene.physics.add.group();
+
+    cursors = scene.input.keyboard.createCursorKeys();
+    wasd = scene.input.keyboard.addKeys({
+        up: Phaser.Input.Keyboard.KeyCodes.W,
+        down: Phaser.Input.Keyboard.KeyCodes.S,
+        left: Phaser.Input.Keyboard.KeyCodes.A,
+        right: Phaser.Input.Keyboard.KeyCodes.D
+    });
+
+    player = scene.add.container(800, 600);
+    let body = scene.add.circle(0, 0, 18, 0x38bdf8);
+    let bow = scene.add.rectangle(12, 0, 10, 6, 0x0284c7);
+    player.add([body, bow]);
+    scene.physics.world.enable(player);
+    player.body.setCollideWorldBounds(true);
+
+    scene.cameras.main.startFollow(player, true, 0.08, 0.08);
+
+    initJoystick();
+
+    socket.on('currentPlayers', (players) => {
+        Object.keys(players).forEach((id) => {
+            if (id !== socket.id) addOtherPlayer(scene, players[id]);
+        });
+    });
+
+    socket.on('newPlayer', (playerInfo) => { addOtherPlayer(scene, playerInfo); });
+
+    socket.on('playerMoved', (playerInfo) => {
+        if (otherPlayers[playerInfo.id]) {
+            otherPlayers[playerInfo.id].setPosition(playerInfo.x, playerInfo.y);
+            otherPlayers[playerInfo.id].setRotation(playerInfo.rotation);
+        }
+    });
+
+    socket.on('playerDisconnected', (id) => {
+        if (otherPlayers[id]) {
+            otherPlayers[id].destroy();
+            delete otherPlayers[id];
+        }
+    });
+
+    socket.on('gemsData', (gems) => { gems.forEach(g => spawnGem(scene, g)); });
+    socket.on('gemSpawn', (gem) => { spawnGem(scene, gem); });
+    socket.on('arrowFired', (data) => { fireArrowLocal(scene, data.x, data.y, data.angle, false); });
+
+    scene.input.on('pointerdown', (pointer) => {
+        if (pointer.x < 180 && pointer.y > window.innerHeight - 180) return;
+
+        let now = scene.time.now;
+        if (now - lastFired > playerStats.fireRate) {
+            lastFired = now;
+            let angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.worldX, pointer.worldY);
+            player.setRotation(angle);
+
+            if (playerStats.arrowCount === 1) {
+                fireArrowLocal(scene, player.x, player.y, angle, true);
+            } else {
+                fireArrowLocal(scene, player.x, player.y, angle - 0.2, true);
+                fireArrowLocal(scene, player.x, player.y, angle, true);
+                fireArrowLocal(scene, player.x, player.y, angle + 0.2, true);
+            }
+        }
+    });
+
+    scene.physics.add.overlap(player, gemsGroup, (p, gem) => {
+        socket.emit('collectGem', gem.id);
+        gem.destroy();
+        gainExp(25);
+    });
+}
+
+function update() {
+    if (!player || !player.body) return;
+
+    let speed = 220;
+    let vx = 0;
+    let vy = 0;
+
+    if (cursors.left.isDown || wasd.left.isDown) vx = -speed;
+    if (cursors.right.isDown || wasd.right.isDown) vx = speed;
+    if (cursors.up.isDown || wasd.up.isDown) vy = -speed;
+    if (cursors.down.isDown || wasd.down.isDown) vy = speed;
+
+    if (moveVector.x !== 0 || moveVector.y !== 0) {
+        vx = moveVector.x * speed;
+        vy = moveVector.y * speed;
+    }
+
+    player.body.setVelocity(vx, vy);
+
+    socket.emit('playerInput', { x: player.x, y: player.y, rotation: player.rotation });
+}
+
+function initJoystick() {
+    const options = {
+        zone: document.getElementById('joystick-zone'),
+        mode: 'static',
+        position: { left: '70px', bottom: '70px' },
+        color: 'white',
+        size: 110
+    };
+
+    const manager = nipplejs.create(options);
+
+    manager.on('move', (evt, data) => {
+        if (data.vector) {
+            moveVector.x = data.vector.x;
+            moveVector.y = -data.vector.y;
+            if (player) player.setRotation(data.angle.radian);
+        }
+    });
+
+    manager.on('end', () => {
+        moveVector.x = 0;
+        moveVector.y = 0;
+    });
+}
+
+function spawnGem(scene, gemData) {
+    let gem = scene.add.circle(gemData.x, gemData.y, 6, 0xfacc15);
+    gem.id = gemData.id;
+    scene.physics.world.enable(gem);
+    gemsGroup.add(gem);
+}
+
+function addOtherPlayer(scene, info) {
+    let p = scene.add.container(info.x, info.y);
+    let body = scene.add.circle(0, 0, 18, 0xef4444);
+    let bow = scene.add.rectangle(12, 0, 10, 6, 0xb91c1c);
+    p.add([body, bow]);
+    otherPlayers[info.id] = p;
+}
+
+function fireArrowLocal(scene, x, y, angle, isOwner) {
+    let arrow = scene.add.rectangle(x, y, 16, 4, 0xf59e0b);
+    scene.physics.world.enable(arrow);
+    arrow.setRotation(angle);
+    scene.physics.velocityFromRotation(angle, 700, arrow.body.velocity);
+
+    if (isOwner) {
+        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 700 });
+    }
+
+    scene.time.delayedCall(1500, () => arrow.destroy());
+}
+
+function gainExp(amount) {
+    playerStats.exp += amount;
+    if (playerStats.exp >= playerStats.level * 100) {
+        playerStats.level++;
+        playerStats.exp = 0;
+        document.getElementById('upgrade-modal').style.display = 'block';
+    }
+    updateGUI();
+}
+
+function updateGUI() {
+    document.getElementById('gui-level').innerText = playerStats.level;
+    document.getElementById('gui-exp').innerText = playerStats.exp;
+    document.getElementById('gui-hp').innerText = `${playerStats.hp}/${playerStats.maxHp}`;
+}
+
+function applySkill(type) {
+    if (type === 'triple') playerStats.arrowCount = 3;
+    if (type === 'speed') playerStats.fireRate = 150;
+    if (type === 'hp') { playerStats.maxHp += 50; playerStats.hp += 50; }
+
+    document.getElementById('upgrade-modal').style.display = 'none';
+    updateGUI();
+}
+</script>
+</body>
+</html>
