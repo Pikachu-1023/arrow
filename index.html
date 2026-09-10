@@ -14,6 +14,37 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0f172a; touch-action: none; }
         #game-container { width: 100vw; height: 100vh; position: relative; }
         
+        /* 手機直向提示畫面 */
+        #rotate-notice {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #0f172a;
+            color: #38bdf8;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        #rotate-notice i {
+            font-size: 50px;
+            margin-bottom: 20px;
+            animation: rotateAnim 2s infinite ease-in-out;
+        }
+        @keyframes rotateAnim {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(90deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* 螢幕為直立時，顯示旋轉提示 */
+        @media screen and (orientation: portrait) {
+            #rotate-notice { display: flex !important; }
+        }
+
         /* 登入視窗 */
         #login-modal {
             position: absolute;
@@ -98,6 +129,12 @@
     </style>
 </head>
 <body>
+
+<!-- 手機直立時的提醒提示 -->
+<div id="rotate-notice">
+    <i class="fa-solid fa-mobile-screen-button"></i>
+    <p>📱 請將手機轉為橫向<br>以獲得最佳體驗</p>
+</div>
 
 <div id="login-modal">
     <div class="login-box">
@@ -262,6 +299,7 @@ function create() {
     // 點擊發射箭矢
     sceneRef.input.on('pointerdown', (pointer) => {
         if (!player) return;
+        // 避開搖桿區域
         if (pointer.x < 180 && pointer.y > window.innerHeight - 180) return;
 
         let now = sceneRef.time.now;
@@ -280,10 +318,7 @@ function create() {
         }
     });
 
-    // 碰撞判定：玩家與寶石
-    sceneRef.physics.add.overlap(arrowsGroup, gemsGroup, null, null, this);
-    
-    // 碰撞判定：我方箭矢擊中敵人
+    // 我方箭矢擊中敵人的碰撞判定
     sceneRef.physics.add.overlap(arrowsGroup, sceneRef.physics.world.bodies, (arrow, body) => {
         let targetContainer = body.gameObject;
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
@@ -312,7 +347,7 @@ function update() {
     player.body.setVelocity(vx, vy);
     socket.emit('playerInput', { x: player.x, y: player.y, rotation: player.rotation });
 
-    // 我吃寶石
+    // 吃寶石判定
     sceneRef.physics.overlap(player, gemsGroup, (p, gem) => {
         socket.emit('collectGem', gem.id);
         gem.destroy();
@@ -326,10 +361,8 @@ function createPlayerContainer(scene, x, y, nameText, color, isSelf) {
     let body = scene.add.circle(0, 0, 18, color);
     let bow = scene.add.rectangle(12, 0, 10, 6, 0x0284c7);
 
-    // 名字標籤
     let name = scene.add.text(0, -38, nameText, { font: '12px Arial', fill: '#ffffff', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5);
 
-    // 血條背景與血條
     let hpBg = scene.add.rectangle(0, -25, 40, 6, 0x334155);
     let hpBar = scene.add.rectangle(-20, -25, 40, 6, 0xef4444).setOrigin(0, 0.5);
 
@@ -375,10 +408,13 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gem);
 }
 
+// 修正後的箭矢發射 logic
 function fireArrowLocal(scene, x, y, angle, isOwner, ownerId) {
     let arrow = scene.add.rectangle(x, y, 16, 4, 0xf59e0b);
     scene.physics.world.enable(arrow);
     arrow.setRotation(angle);
+
+    // 賦予箭矢物理移動速度
     scene.physics.velocityFromRotation(angle, 700, arrow.body.velocity);
 
     if (isOwner) {
@@ -388,7 +424,12 @@ function fireArrowLocal(scene, x, y, angle, isOwner, ownerId) {
         otherArrowsGroup.add(arrow);
     }
 
-    scene.time.delayedCall(1500, () => arrow.destroy());
+    // 1.5 秒後自動銷毀
+    scene.time.delayedCall(1500, () => {
+        if (arrow && arrow.active) {
+            arrow.destroy();
+        }
+    });
 }
 
 function gainExp(amount) {
