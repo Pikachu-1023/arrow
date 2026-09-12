@@ -10,10 +10,11 @@
     <!-- FontAwesome & NippleJS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
-    <!-- 外部動態與特效套件 (Animate.css, Canvas-Confetti, Howler) -->
+    <!-- 外部動態與特效套件 (Animate.css, Canvas-Confetti, Howler, SimplexNoise) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
     
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; user-select: none; -webkit-user-select: none; }
@@ -55,7 +56,6 @@
         }
         .stat-box { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
         
-        /* 經驗值進度條 */
         .exp-bar-container {
             width: 140px; height: 14px; background: rgba(30, 41, 59, 0.9);
             border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.5); overflow: hidden; position: relative;
@@ -155,20 +155,20 @@
 const socket = io();
 let game, sceneRef;
 let player, otherPlayers = {}, otherPlayersGroup;
-let arrowsGroup, otherArrowsGroup, gemsGroup, obstaclesGroup;
+let arrowsGroup, otherArrowsGroup, gemsGroup, obstaclesGroup, bushesGroup;
 let cursors, wasd;
 let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
 let currentAngle = 0;
+let simplex = new SimplexNoise();
 
-// 玩家屬性
+// 玩家屬性：血量調高至 130
 let playerStats = { 
-    name: '玩家', level: 1, exp: 0, hp: 100, maxHp: 100, 
+    name: '玩家', level: 1, exp: 0, hp: 130, maxHp: 130, 
     speed: 240, arrowCount: 1, fireRate: 300, 
     piercing: false, lifesteal: 0 
 };
 
-// 精簡化技能列表
 const ALL_SKILLS = [
     { id: 'triple', name: '箭矢 +1', icon: 'fa-burst', color: '#38bdf8' },
     { id: 'speed', name: '攻速 UP', icon: 'fa-gauge-high', color: '#38bdf8' },
@@ -241,6 +241,10 @@ function create() {
     gemsGroup = sceneRef.physics.add.group();
     otherPlayersGroup = sceneRef.physics.add.group();
     obstaclesGroup = sceneRef.physics.add.staticGroup();
+    bushesGroup = sceneRef.physics.add.staticGroup();
+
+    // 動態生成豐富地形與草叢 (利用 Simplex Noise)
+    generateMapTerrain();
 
     cursors = sceneRef.input.keyboard.createCursorKeys();
     wasd = sceneRef.input.keyboard.addKeys({
@@ -266,12 +270,6 @@ function create() {
     });
 
     socket.on('obstaclesData', (obsList) => {
-        obsList.forEach(obs => {
-            let rect = sceneRef.add.rectangle(obs.x + obs.w / 2, obs.y + obs.h / 2, obs.w, obs.h, 0x334155)
-                .setStrokeStyle(3, 0x64748b);
-            obstaclesGroup.add(rect);
-        });
-
         sceneRef.physics.add.overlap(arrowsGroup, obstaclesGroup, (arrow) => {
             if (!arrow.piercing) arrow.destroy();
         });
@@ -342,8 +340,8 @@ function create() {
         if (data.id === socket.id) {
             playerStats.level = 1;
             playerStats.exp = 0;
-            playerStats.hp = 100;
-            playerStats.maxHp = 100;
+            playerStats.hp = 130;
+            playerStats.maxHp = 130;
             playerStats.speed = 240;
             playerStats.arrowCount = 1;
             playerStats.fireRate = 300;
@@ -353,7 +351,7 @@ function create() {
             player.setPosition(data.x, data.y);
             socket.emit('updateLevel', 1);
             updateGUI();
-            updateHpBar(player, 100, 100);
+            updateHpBar(player, 130, 130);
         } else if (otherPlayers[data.id]) {
             otherPlayers[data.id].setPosition(data.x, data.y);
             updateHpBar(otherPlayers[data.id], data.hp, data.maxHp);
@@ -371,11 +369,12 @@ function create() {
         });
     });
 
+    // 傷害微調：傷害改為 15 (原 20)
     sceneRef.physics.add.overlap(arrowsGroup, otherPlayersGroup, (arrow, targetContainer) => {
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
             socket.emit('hitPlayer', {
                 targetId: targetContainer.id,
-                damage: 20,
+                damage: 15,
                 lifesteal: playerStats.lifesteal
             });
 
@@ -384,6 +383,41 @@ function create() {
             }
         }
     });
+}
+
+// 豐富地形生成：岩石與草叢
+function generateMapTerrain() {
+    for (let x = 100; x < 1500; x += 120) {
+        for (let y = 100; y < 1100; y += 120) {
+            let noiseVal = simplex.noise2D(x * 0.003, y * 0.003);
+            if (noiseVal > 0.45) {
+                // 岩石障礙物 (多邊形/不規則圖案)
+                let rockGfx = sceneRef.add.graphics();
+                rockGfx.fillStyle(0x475569, 1);
+                rockGfx.fillCircle(0, 0, 24);
+                rockGfx.lineStyle(2, 0x94a3b8, 1);
+                rockGfx.strokeCircle(0, 0, 24);
+                
+                let container = sceneRef.add.container(x, y, [rockGfx]);
+                sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
+                container.body.setCircle(22, -22, -22);
+                obstaclesGroup.add(container);
+            } else if (noiseVal < -0.4) {
+                // 草叢障礙區域 (隱身草叢)
+                let bushGfx = sceneRef.add.graphics();
+                bushGfx.fillStyle(0x15803d, 0.7);
+                bushGfx.fillCircle(0, 0, 32);
+                bushGfx.fillStyle(0x16a34a, 0.8);
+                bushGfx.fillCircle(-8, -6, 20);
+                bushGfx.fillCircle(10, 8, 22);
+
+                let bushContainer = sceneRef.add.container(x, y, [bushGfx]);
+                sceneRef.physics.world.enable(bushContainer, Phaser.Physics.Arcade.STATIC_BODY);
+                bushContainer.body.setCircle(30, -30, -30);
+                bushesGroup.add(bushContainer);
+            }
+        }
+    }
 }
 
 function addOtherPlayer(id, data) {
@@ -417,7 +451,12 @@ function update() {
         }
     }
 
-    // 發射箭矢邏輯
+    // 草叢隱身機制
+    let inBush = false;
+    sceneRef.physics.overlap(player, bushesGroup, () => { inBush = true; });
+    player.setAlpha(inBush ? 0.4 : 1.0);
+
+    // 射擊邏輯
     let now = sceneRef.time.now;
     if (now - lastFired > playerStats.fireRate) {
         lastFired = now;
@@ -425,7 +464,7 @@ function update() {
         if (count === 1) {
             fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, playerStats.piercing);
         } else {
-            let spreadAngle = 0.3; // 總散角弧度
+            let spreadAngle = 0.3;
             let startAngle = currentAngle - (spreadAngle / 2);
             let step = spreadAngle / (count - 1);
             for (let i = 0; i < count; i++) {
@@ -445,7 +484,6 @@ function update() {
     });
 }
 
-// 建立角色 Container (名稱與血條位於角色正上方)
 function createPlayerContainer(scene, x, y, nameText, colorHex) {
     let container = scene.add.container(x, y);
 
@@ -461,7 +499,6 @@ function createPlayerContainer(scene, x, y, nameText, colorHex) {
 
     container.characterGraphics = charGfx;
 
-    // 角色頭頂名稱與血條排版
     let name = scene.add.text(0, -45, nameText, { font: 'bold 13px Arial', fill: '#ffffff', stroke: '#0f172a', strokeThickness: 4 }).setOrigin(0.5);
     let hpBg = scene.add.rectangle(0, -30, 44, 8, 0x0f172a).setStrokeStyle(1, 0x475569);
     let hpBar = scene.add.rectangle(-21, -30, 42, 6, 0x10b981).setOrigin(0, 0.5);
@@ -510,7 +547,6 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gemContainer);
 }
 
-// 射箭邏輯：加入射程距離與飛行時間限制，防止變為地圖炮
 function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing) {
     let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
@@ -529,7 +565,6 @@ function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing) {
         scene.physics.velocityFromRotation(angle, 750, arrow.body.velocity);
     }
 
-    // 將存活時間設為 500ms（在 750 速度下射程約為 375px，限制在合理的半畫面距離內）
     scene.time.delayedCall(500, () => {
         if (arrow && arrow.active) arrow.destroy();
     });
@@ -581,27 +616,16 @@ function updateGUI() {
     let targetExp = playerStats.level * 100;
     let pct = Math.min(100, Math.floor((playerStats.exp / targetExp) * 100));
     
-    // 更新經驗值進度條
     document.getElementById('exp-bar-fill').style.width = pct + '%';
     document.getElementById('exp-text').innerText = `${playerStats.exp} / ${targetExp}`;
 }
 
 function applySkill(type) {
-    if (type === 'triple') {
-        playerStats.arrowCount += 1;
-    }
-    if (type === 'speed') {
-        playerStats.fireRate = Math.max(80, Math.floor(playerStats.fireRate * 0.8));
-    }
-    if (type === 'moveSpeed') {
-        playerStats.speed += 72;
-    }
-    if (type === 'pierce') {
-        playerStats.piercing = true;
-    }
-    if (type === 'lifesteal') {
-        playerStats.lifesteal += 0.15;
-    }
+    if (type === 'triple') playerStats.arrowCount += 1;
+    if (type === 'speed') playerStats.fireRate = Math.max(80, Math.floor(playerStats.fireRate * 0.8));
+    if (type === 'moveSpeed') playerStats.speed += 72;
+    if (type === 'pierce') playerStats.piercing = true;
+    if (type === 'lifesteal') playerStats.lifesteal += 0.15;
     if (type === 'hp') { 
         playerStats.maxHp += 50; 
         playerStats.hp += 50; 
