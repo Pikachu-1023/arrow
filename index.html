@@ -70,12 +70,12 @@
             font-size: 14px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 10; pointer-events: none;
         }
 
-        /* 適合手機橫向排版的技能升級彈窗 */
+        /* 修正為正中心對齊的技能升級彈窗 CSS */
         #upgrade-modal {
-            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; margin: auto;
             background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 2px solid #38bdf8;
             padding: 15px; border-radius: 20px; text-align: center; color: #fff; z-index: 100;
-            width: 95%; max-width: 520px;
+            width: 90%; max-width: 500px; height: fit-content; max-height: 85vh;
         }
         #upgrade-modal h3 { margin: 0 0 10px 0; font-size: 16px; color: #facc15; }
         
@@ -526,7 +526,6 @@ function gainExp(amount) {
     updateGUI();
 }
 
-// 橫向簡化版技能抽卡
 function showUpgradeModal() {
     let container = document.getElementById('skill-options-container');
     if (!container) return;
@@ -557,22 +556,21 @@ function updateGUI() {
     document.getElementById('gui-hp').innerText = `${playerStats.hp}/${playerStats.maxHp}`;
 }
 
-// 可無限/多階層疊加的技能效果
 function applySkill(type) {
     if (type === 'triple') {
-        playerStats.arrowCount += 1; // 每次多 1 發箭矢
+        playerStats.arrowCount += 1;
     }
     if (type === 'speed') {
-        playerStats.fireRate = Math.max(80, Math.floor(playerStats.fireRate * 0.8)); // 降低攻擊間隔 (最低限制 80ms)
+        playerStats.fireRate = Math.max(80, Math.floor(playerStats.fireRate * 0.8));
     }
     if (type === 'moveSpeed') {
-        playerStats.speed += 72; // 每次跑速 +30% (+72)
+        playerStats.speed += 72;
     }
     if (type === 'pierce') {
         playerStats.piercing = true;
     }
     if (type === 'lifesteal') {
-        playerStats.lifesteal += 0.15; // 每次 +15% 吸血
+        playerStats.lifesteal += 0.15;
     }
     if (type === 'hp') { 
         playerStats.maxHp += 50; 
