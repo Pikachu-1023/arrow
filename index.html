@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>弓箭傳說Zhenhe</title>
+    <title>弓箭手大作戰：雙端對戰版</title>
+    <!-- Phaser & Socket.io -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <!-- FontAwesome & NippleJS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
+    <!-- 外部動態與特效套件 (Animate.css, Canvas-Confetti, Howler) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
     
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; user-select: none; -webkit-user-select: none; }
@@ -59,16 +65,22 @@
         #leaderboard-list { list-style: none; padding: 0; margin: 0; }
         #leaderboard-list li { display: flex; justify-content: space-between; margin-bottom: 4px; }
 
+        #kill-feed {
+            position: absolute; top: 75px; left: 15px; color: #ef4444; font-weight: bold;
+            font-size: 14px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 10; pointer-events: none;
+        }
+
         #upgrade-modal {
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 2px solid #38bdf8;
-            padding: 25px; border-radius: 24px; text-align: center; color: #fff; z-index: 100; width: 85%; max-width: 400px;
+            padding: 25px; border-radius: 24px; text-align: center; color: #fff; z-index: 100; width: 90%; max-width: 440px;
         }
-        .skill-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+        .skill-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; max-height: 60vh; overflow-y: auto; }
         .skill-card {
-            background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; padding: 14px; border-radius: 16px;
-            cursor: pointer; display: flex; align-items: center; gap: 15px;
+            background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; padding: 12px 16px; border-radius: 16px;
+            cursor: pointer; display: flex; align-items: center; gap: 15px; transition: all 0.2s;
         }
+        .skill-card:hover { border-color: #38bdf8; transform: scale(1.02); }
     </style>
 </head>
 <body>
@@ -79,7 +91,7 @@
 </div>
 
 <div id="login-modal">
-    <div class="login-box">
+    <div class="login-box animate__animated animate__zoomIn">
         <h2><i class="fa-solid fa-bow-arrow"></i> 弓箭手大作戰</h2>
         <input type="text" id="player-name-input" placeholder="請輸入名字..." maxlength="10">
         <button onclick="startGame()">進入遊戲</button>
@@ -93,6 +105,8 @@
         <div class="stat-box"><i class="fa-solid fa-heart" style="color:#ef4444;"></i> <span id="gui-hp">100/100</span></div>
     </div>
 
+    <div id="kill-feed"></div>
+
     <div id="leaderboard">
         <h4><i class="fa-solid fa-trophy"></i> 等級排行榜</h4>
         <ul id="leaderboard-list"></ul>
@@ -100,7 +114,7 @@
 
     <div id="joystick-zone"></div>
 
-    <div id="upgrade-modal">
+    <div id="upgrade-modal" class="animate__animated animate__fadeInDown">
         <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:#facc15;"></i> 等級提升！選擇能力</h3>
         <div class="skill-grid">
             <div class="skill-card" onclick="applySkill('triple')">
@@ -109,11 +123,23 @@
             </div>
             <div class="skill-card" onclick="applySkill('speed')">
                 <i class="fa-solid fa-gauge-high" style="font-size:24px;color:#38bdf8;"></i>
-                <div style="text-align:left;"><b>攻擊射速 UP</b><br><small style="color:#94a3b8;">大幅降低攻擊間隔</small></div>
+                <div style="text-align:left;"><b>攻擊射速 UP</b><br><small style="color:#94a3b8;">大幅降低射擊間隔</small></div>
+            </div>
+            <div class="skill-card" onclick="applySkill('moveSpeed')">
+                <i class="fa-solid fa-person-running" style="font-size:24px;color:#a855f7;"></i>
+                <div style="text-align:left;"><b>輕盈疾跑</b><br><small style="color:#94a3b8;">移動速度提升 30%</small></div>
+            </div>
+            <div class="skill-card" onclick="applySkill('pierce')">
+                <i class="fa-solid fa-arrows-to-eye" style="font-size:24px;color:#f97316;"></i>
+                <div style="text-align:left;"><b>貫穿之箭</b><br><small style="color:#94a3b8;">箭矢可穿透障礙物與敵人</small></div>
+            </div>
+            <div class="skill-card" onclick="applySkill('lifesteal')">
+                <i class="fa-solid fa-vial" style="font-size:24px;color:#ef4444;"></i>
+                <div style="text-align:left;"><b>吸血效果</b><br><small style="color:#94a3b8;">造成傷害時回復 25% 血量</small></div>
             </div>
             <div class="skill-card" onclick="applySkill('hp')">
-                <i class="fa-solid fa-shield-halved" style="font-size:24px;color:#38bdf8;"></i>
-                <div style="text-align:left;"><b>生命上限 +50</b><br><small style="color:#94a3b8;">提高生存能力並補血</small></div>
+                <i class="fa-solid fa-shield-halved" style="font-size:24px;color:#10b981;"></i>
+                <div style="text-align:left;"><b>生命上限 +50</b><br><small style="color:#94a3b8;">提高生命上限並立即補血</small></div>
             </div>
         </div>
     </div>
@@ -128,7 +154,13 @@ let cursors, wasd;
 let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
 let currentAngle = 0;
-let playerStats = { name: '玩家', level: 1, exp: 0, hp: 100, maxHp: 100, arrowCount: 1, fireRate: 300 };
+
+// 玩家屬性
+let playerStats = { 
+    name: '玩家', level: 1, exp: 0, hp: 100, maxHp: 100, 
+    speed: 240, arrowCount: 1, fireRate: 300, 
+    piercing: false, lifesteal: 0 
+};
 
 function checkOrientation() {
     const notice = document.getElementById('rotate-notice');
@@ -164,6 +196,7 @@ function initGame() {
 function create() {
     sceneRef = this;
 
+    // 箭矢繪製
     let arrowGfx = sceneRef.make.graphics({x: 0, y: 0, add: false});
     arrowGfx.lineStyle(2, 0xd97706, 1);
     arrowGfx.lineBetween(0, 5, 18, 5);
@@ -187,7 +220,6 @@ function create() {
         }
     }
 
-    // 正確初始化 Arcade 動態物理群組
     arrowsGroup = sceneRef.physics.add.group({ runChildUpdate: true });
     otherArrowsGroup = sceneRef.physics.add.group({ runChildUpdate: true });
     gemsGroup = sceneRef.physics.add.group();
@@ -224,8 +256,13 @@ function create() {
             obstaclesGroup.add(rect);
         });
 
-        sceneRef.physics.add.overlap(arrowsGroup, obstaclesGroup, (arrow) => arrow.destroy());
-        sceneRef.physics.add.overlap(otherArrowsGroup, obstaclesGroup, (arrow) => arrow.destroy());
+        // 非貫穿箭矢碰到障礙物銷毀
+        sceneRef.physics.add.overlap(arrowsGroup, obstaclesGroup, (arrow) => {
+            if (!arrow.piercing) arrow.destroy();
+        });
+        sceneRef.physics.add.overlap(otherArrowsGroup, obstaclesGroup, (arrow) => {
+            if (!arrow.piercing) arrow.destroy();
+        });
     });
 
     socket.on('currentPlayers', (players) => {
@@ -265,7 +302,7 @@ function create() {
     });
 
     socket.on('arrowFired', (data) => {
-        fireArrowLocal(sceneRef, data.x, data.y, data.angle, false);
+        fireArrowLocal(sceneRef, data.x, data.y, data.angle, false, data.piercing);
     });
 
     socket.on('playerHealthUpdate', (data) => {
@@ -277,12 +314,34 @@ function create() {
         if (target) updateHpBar(target, data.hp, data.maxHp);
     });
 
+    // 擊殺獲得獎勵
+    socket.on('killReward', (data) => {
+        gainExp(data.exp);
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); // 擊殺慶祝花火
+        
+        let feed = document.getElementById('kill-feed');
+        feed.innerText = `💥 你擊殺了 ${data.victimName}！經驗值 +${data.exp}`;
+        setTimeout(() => { feed.innerText = ''; }, 3000);
+    });
+
+    // 死亡重置為 Level 1
     socket.on('playerRespawn', (data) => {
         if (data.id === socket.id) {
-            playerStats.hp = data.maxHp;
+            // 本人死亡重置屬性
+            playerStats.level = 1;
+            playerStats.exp = 0;
+            playerStats.hp = 100;
+            playerStats.maxHp = 100;
+            playerStats.speed = 240;
+            playerStats.arrowCount = 1;
+            playerStats.fireRate = 300;
+            playerStats.piercing = false;
+            playerStats.lifesteal = 0;
+
             player.setPosition(data.x, data.y);
+            socket.emit('updateLevel', 1);
             updateGUI();
-            updateHpBar(player, data.hp, data.maxHp);
+            updateHpBar(player, 100, 100);
         } else if (otherPlayers[data.id]) {
             otherPlayers[data.id].setPosition(data.x, data.y);
             updateHpBar(otherPlayers[data.id], data.hp, data.maxHp);
@@ -300,10 +359,19 @@ function create() {
         });
     });
 
+    // 箭矢命中敵方
     sceneRef.physics.add.overlap(arrowsGroup, otherPlayersGroup, (arrow, targetContainer) => {
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
-            socket.emit('hitPlayer', targetContainer.id);
-            arrow.destroy();
+            socket.emit('hitPlayer', {
+                targetId: targetContainer.id,
+                damage: 20,
+                lifesteal: playerStats.lifesteal
+            });
+
+            // 如果沒有貫穿天賦，擊中後銷毀箭矢
+            if (!arrow.piercing) {
+                arrow.destroy();
+            }
         }
     });
 }
@@ -318,17 +386,16 @@ function addOtherPlayer(id, data) {
 function update() {
     if (!player || !player.body) return;
 
-    let speed = 240;
     let vx = 0, vy = 0;
 
-    if (cursors.left.isDown || wasd.left.isDown) vx = -speed;
-    if (cursors.right.isDown || wasd.right.isDown) vx = speed;
-    if (cursors.up.isDown || wasd.up.isDown) vy = -speed;
-    if (cursors.down.isDown || wasd.down.isDown) vy = speed;
+    if (cursors.left.isDown || wasd.left.isDown) vx = -playerStats.speed;
+    if (cursors.right.isDown || wasd.right.isDown) vx = playerStats.speed;
+    if (cursors.up.isDown || wasd.up.isDown) vy = -playerStats.speed;
+    if (cursors.down.isDown || wasd.down.isDown) vy = playerStats.speed;
 
     if (moveVector.x !== 0 || moveVector.y !== 0) {
-        vx = moveVector.x * speed;
-        vy = moveVector.y * speed;
+        vx = moveVector.x * playerStats.speed;
+        vy = moveVector.y * playerStats.speed;
     }
 
     player.body.setVelocity(vx, vy);
@@ -344,11 +411,11 @@ function update() {
     if (now - lastFired > playerStats.fireRate) {
         lastFired = now;
         if (playerStats.arrowCount === 1) {
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, playerStats.piercing);
         } else {
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle - 0.2, true);
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true);
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle + 0.2, true);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle - 0.2, true, playerStats.piercing);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, playerStats.piercing);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle + 0.2, true, playerStats.piercing);
         }
     }
 
@@ -425,13 +492,17 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gemContainer);
 }
 
-function fireArrowLocal(scene, x, y, angle, isOwner) {
+function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing) {
     let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
+    arrow.piercing = isPiercing;
+
+    // 貫穿箭發光或色彩改變區隔
+    if (isPiercing) arrow.setTint(0xf97316);
 
     if (isOwner) {
         arrowsGroup.add(arrow);
-        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 850 });
+        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 850, piercing: isPiercing });
     } else {
         otherArrowsGroup.add(arrow);
     }
@@ -441,9 +512,7 @@ function fireArrowLocal(scene, x, y, angle, isOwner) {
     }
 
     scene.time.delayedCall(1200, () => {
-        if (arrow && arrow.active) {
-            arrow.destroy();
-        }
+        if (arrow && arrow.active) arrow.destroy();
     });
 }
 
@@ -453,7 +522,13 @@ function gainExp(amount) {
         playerStats.level++;
         playerStats.exp = 0;
         socket.emit('updateLevel', playerStats.level);
-        document.getElementById('upgrade-modal').style.display = 'block';
+        
+        let modal = document.getElementById('upgrade-modal');
+        modal.style.display = 'block';
+        
+        // Canvas Confetti 升級彩帶
+        confetti({ particleCount: 50, angle: 60, spread: 55, origin: { x: 0 } });
+        confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1 } });
     }
     updateGUI();
 }
@@ -467,7 +542,11 @@ function updateGUI() {
 function applySkill(type) {
     if (type === 'triple') playerStats.arrowCount = 3;
     if (type === 'speed') playerStats.fireRate = 150;
+    if (type === 'moveSpeed') playerStats.speed = 310;
+    if (type === 'pierce') playerStats.piercing = true;
+    if (type === 'lifesteal') playerStats.lifesteal = 0.25;
     if (type === 'hp') { playerStats.maxHp += 50; playerStats.hp += 50; }
+    
     document.getElementById('upgrade-modal').style.display = 'none';
     updateGUI();
 }

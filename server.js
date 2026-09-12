@@ -11,7 +11,6 @@ app.use(express.static(__dirname));
 let players = {};
 let gems = [];
 
-// 地圖障礙物座標列表 (x, y, width, height)
 const obstacles = [
     { x: 300, y: 300, w: 120, h: 120 },
     { x: 1200, y: 300, w: 120, h: 120 },
@@ -20,7 +19,6 @@ const obstacles = [
     { x: 1200, y: 850, w: 120, h: 120 }
 ];
 
-// 產生黃色寶石
 for (let i = 0; i < 35; i++) {
     gems.push({
         id: i,
@@ -30,8 +28,6 @@ for (let i = 0; i < 35; i++) {
 }
 
 io.on('connection', (socket) => {
-    console.log('玩家連線:', socket.id);
-
     socket.on('joinGame', (data) => {
         players[socket.id] = {
             id: socket.id,
@@ -40,7 +36,6 @@ io.on('connection', (socket) => {
             y: Math.floor(Math.random() * 1000) + 100,
             hp: 100,
             maxHp: 100,
-            score: 0,
             level: 1,
             rotation: 0
         };
@@ -48,7 +43,7 @@ io.on('connection', (socket) => {
         socket.emit('initSelf', players[socket.id]);
         socket.emit('currentPlayers', players);
         socket.emit('gemsData', gems);
-        socket.emit('obstaclesData', obstacles); // 傳送障礙物資料
+        socket.emit('obstaclesData', obstacles);
 
         socket.broadcast.emit('newPlayer', players[socket.id]);
         io.emit('updateLeaderboard', players);
@@ -77,21 +72,45 @@ io.on('connection', (socket) => {
             y: arrowData.y,
             angle: arrowData.angle,
             speed: arrowData.speed,
+            piercing: arrowData.piercing,
             id: Math.random().toString(36).substr(2, 9)
         });
     });
 
-    socket.on('hitPlayer', (targetId) => {
+    socket.on('hitPlayer', (data) => {
+        const targetId = data.targetId;
+        const damage = data.damage || 20;
+
         if (players[targetId] && players[socket.id]) {
-            let damage = 20;
             players[targetId].hp -= damage;
 
+            // 吸血回血機制
+            if (data.lifesteal && data.lifesteal > 0) {
+                players[socket.id].hp = Math.min(
+                    players[socket.id].maxHp,
+                    players[socket.id].hp + Math.floor(damage * data.lifesteal)
+                );
+                socket.emit('playerHealthUpdate', {
+                    id: socket.id,
+                    hp: players[socket.id].hp,
+                    maxHp: players[socket.id].maxHp
+                });
+            }
+
+            // 死亡與擊殺結算
             if (players[targetId].hp <= 0) {
-                players[targetId].hp = players[targetId].maxHp;
+                // 重置受害者（等級、血量歸零重來）
+                players[targetId].hp = 100;
+                players[targetId].maxHp = 100;
+                players[targetId].level = 1;
                 players[targetId].x = Math.floor(Math.random() * 1400) + 100;
                 players[targetId].y = Math.floor(Math.random() * 1000) + 100;
-                
+
+                // 擊殺者獎勵大量經驗值（150點）
+                socket.emit('killReward', { exp: 150, victimName: players[targetId].name });
+
                 io.emit('playerRespawn', players[targetId]);
+                io.emit('updateLeaderboard', players);
             } else {
                 io.emit('playerHealthUpdate', {
                     id: targetId,
@@ -116,7 +135,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('玩家離線:', socket.id);
         delete players[socket.id];
         io.emit('playerDisconnected', socket.id);
         io.emit('updateLeaderboard', players);
