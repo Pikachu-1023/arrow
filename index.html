@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>弓箭手大作戰：雙端對戰版</title>
+    <title>箭之勇者:Zhenhe</title>
     <!-- Phaser & Socket.io -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -70,6 +70,7 @@
             font-size: 14px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 10; pointer-events: none;
         }
 
+        /* 正確居中彈窗樣式 */
         #upgrade-modal {
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 2px solid #38bdf8;
@@ -114,10 +115,11 @@
 
     <div id="joystick-zone"></div>
 
+    <!-- 補上 id="skill-options-container" -->
     <div id="upgrade-modal" class="animate__animated animate__fadeInDown">
-            <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:#facc15;"></i> 等級提升！選擇能力</h3>
-            <div class="skill-grid" id="skill-options-container"></div>
-        </div>
+        <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:#facc15;"></i> 等級提升！選擇能力</h3>
+        <div class="skill-grid" id="skill-options-container"></div>
+    </div>
 </div>
 
 <script>
@@ -136,6 +138,16 @@ let playerStats = {
     speed: 240, arrowCount: 1, fireRate: 300, 
     piercing: false, lifesteal: 0 
 };
+
+// 技能庫定義
+const ALL_SKILLS = [
+    { id: 'triple', name: '三連散射', desc: '一次發射 3 發箭矢', icon: 'fa-burst', color: '#38bdf8' },
+    { id: 'speed', name: '攻擊射速 UP', desc: '大幅降低射擊間隔', icon: 'fa-gauge-high', color: '#38bdf8' },
+    { id: 'moveSpeed', name: '輕盈疾跑', desc: '移動速度提升 30%', icon: 'fa-person-running', color: '#a855f7' },
+    { id: 'pierce', name: '貫穿之箭', desc: '箭矢可穿透障礙物與敵人', icon: 'fa-arrows-to-eye', color: '#f97316' },
+    { id: 'lifesteal', name: '吸血效果', desc: '造成傷害時回復 25% 血量', icon: 'fa-vial', color: '#ef4444' },
+    { id: 'hp', name: '生命上限 +50', desc: '提高生命上限並立即補血', icon: 'fa-shield-halved', color: '#10b981' }
+];
 
 function checkOrientation() {
     const notice = document.getElementById('rotate-notice');
@@ -343,7 +355,6 @@ function create() {
                 lifesteal: playerStats.lifesteal
             });
 
-            // 如果沒有貫穿天賦，擊中後銷毀箭矢
             if (!arrow.piercing) {
                 arrow.destroy();
             }
@@ -472,7 +483,6 @@ function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing) {
     arrow.setRotation(angle);
     arrow.piercing = isPiercing;
 
-    // 貫穿箭發光或色彩改變區隔
     if (isPiercing) arrow.setTint(0xf97316);
 
     if (isOwner) {
@@ -498,14 +508,43 @@ function gainExp(amount) {
         playerStats.exp = 0;
         socket.emit('updateLevel', playerStats.level);
 
-        let modal = document.getElementById('upgrade-modal');
-        modal.style.display = 'block';
+        // 呼叫彈窗與隨機技能抽取
+        showUpgradeModal();
 
         // Canvas Confetti 升級彩帶
         confetti({ particleCount: 50, angle: 60, spread: 55, origin: { x: 0 } });
         confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1 } });
     }
     updateGUI();
+}
+
+// 隨機抽取 3 個技能並顯示
+function showUpgradeModal() {
+    let container = document.getElementById('skill-options-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+
+    // 洗牌並抽取 3 個技能
+    let shuffled = [...ALL_SKILLS].sort(() => 0.5 - Math.random());
+    let selectedSkills = shuffled.slice(0, 3);
+
+    selectedSkills.forEach(skill => {
+        let card = document.createElement('div');
+        card.className = 'skill-card';
+        card.onclick = () => applySkill(skill.id);
+        card.innerHTML = `
+            <i class="fa-solid ${skill.icon}" style="font-size:24px;color:${skill.color};"></i>
+            <div style="text-align:left;">
+                <b>${skill.name}</b><br>
+                <small style="color:#94a3b8;">${skill.desc}</small>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    let modal = document.getElementById('upgrade-modal');
+    if (modal) modal.style.display = 'block';
 }
 
 function updateGUI() {
