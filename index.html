@@ -13,7 +13,6 @@
     <!-- 外部動態與特效套件 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
     
     <style>
@@ -153,14 +152,23 @@
 
 <script>
 const socket = io();
-let game, sceneRef;
+let game, sceneRef, minimap;
 let player, otherPlayers = {}, otherPlayersGroup;
 let arrowsGroup, otherArrowsGroup, gemsGroup, obstaclesGroup, bushesGroup;
 let cursors, wasd;
 let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
 let currentAngle = 0;
-let simplex = new SimplexNoise();
+
+// 固定 Seed 偽隨機產生器，確保所有玩家產生的地圖完全一致
+function seededRandom(seed) {
+    let x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+}
+
+// 固定的 SimplexNoise 初始化 (傳入固定 Seed 亂數來源)
+let seedCounter = 12345;
+let simplex = new SimplexNoise(() => seededRandom(seedCounter++));
 
 let playerStats = { 
     name: '玩家', level: 1, exp: 0, hp: 130, maxHp: 130, 
@@ -224,7 +232,7 @@ function create() {
     sceneRef.cameras.main.setBounds(0, 0, 1600, 1200);
     sceneRef.physics.world.setBounds(0, 0, 1600, 1200);
 
-    // 森林背景設計 (深綠草地格紋 + 森林細節)
+    // 森林背景設計
     let bgGraphics = sceneRef.add.graphics();
     bgGraphics.fillStyle(0x064e3b, 1);
     bgGraphics.fillRect(0, 0, 1600, 1200);
@@ -243,7 +251,7 @@ function create() {
     obstaclesGroup = sceneRef.physics.add.staticGroup();
     bushesGroup = sceneRef.physics.add.staticGroup();
 
-    // 生成森林地形（豐富樹木、大小形狀不同的柱子/石頭、草叢）
+    // 生成固定且一致的森林地形
     generateForestTerrain();
 
     cursors = sceneRef.input.keyboard.createCursorKeys();
@@ -261,7 +269,8 @@ function create() {
 
         sceneRef.physics.add.collider(player, obstaclesGroup);
 
-        let minimap = sceneRef.cameras.add(window.innerWidth - 170, window.innerHeight - 130, 150, 110)
+        // 小地圖建立
+        minimap = sceneRef.cameras.add(window.innerWidth - 170, window.innerHeight - 130, 150, 110)
             .setZoom(0.08)
             .setName('mini');
         minimap.setBackgroundColor(0x022c22);
@@ -387,15 +396,14 @@ function create() {
     });
 }
 
-// 森林地圖與各式柱子/石頭生成機制
+// 森林地圖與各式柱子/石頭生成機制（搭配固定亂數）
 function generateForestTerrain() {
-    // 1. 裝飾性樹木 (純視覺背景)
+    let treeSeed = 8888; // 裝飾樹木固定亂數 Seed
     for (let i = 0; i < 40; i++) {
-        let tx = Phaser.Math.Between(50, 1550);
-        let ty = Phaser.Math.Between(50, 1150);
+        let tx = Math.floor(seededRandom(treeSeed++) * 1500) + 50;
+        let ty = Math.floor(seededRandom(treeSeed++) * 1100) + 50;
         let treeGfx = sceneRef.add.graphics();
         
-        // 樹幹與樹冠
         treeGfx.fillStyle(0x78350f, 1);
         treeGfx.fillRect(tx - 6, ty - 5, 12, 20);
         treeGfx.fillStyle(0x14532d, 0.85);
@@ -406,18 +414,17 @@ function generateForestTerrain() {
         treeGfx.setDepth(1);
     }
 
-    // 2. 隨機生成各式形狀與大小的石柱/柱子 (障礙物)
+    // 隨機生成各式形狀與大小的石柱/柱子與草叢
     for (let x = 120; x < 1500; x += 130) {
         for (let y = 120; y < 1100; y += 130) {
             let noiseVal = simplex.noise2D(x * 0.003, y * 0.003);
             
             if (noiseVal > 0.35) {
                 let pillarGfx = sceneRef.add.graphics();
-                let type = Math.floor(Math.abs(noiseVal * 10)) % 3; // 3種柱子類型
+                let type = Math.floor(Math.abs(noiseVal * 10)) % 3;
                 let container = sceneRef.add.container(x, y);
 
                 if (type === 0) {
-                    // 大型圓柱
                     pillarGfx.fillStyle(0x334155, 1);
                     pillarGfx.fillCircle(0, 0, 32);
                     pillarGfx.lineStyle(3, 0x64748b, 1);
@@ -427,7 +434,6 @@ function generateForestTerrain() {
                     sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
                     container.body.setCircle(30, -30, -30);
                 } else if (type === 1) {
-                    // 小型細柱
                     pillarGfx.fillStyle(0x475569, 1);
                     pillarGfx.fillCircle(0, 0, 18);
                     pillarGfx.lineStyle(2, 0x94a3b8, 1);
@@ -437,7 +443,6 @@ function generateForestTerrain() {
                     sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
                     container.body.setCircle(16, -16, -16);
                 } else {
-                    // 矩形/多邊形方形柱
                     pillarGfx.fillStyle(0x1e293b, 1);
                     pillarGfx.fillRect(-25, -25, 50, 50);
                     pillarGfx.lineStyle(3, 0x475569, 1);
@@ -453,7 +458,6 @@ function generateForestTerrain() {
                 obstaclesGroup.add(container);
             } 
             else if (noiseVal < -0.35) {
-                // 3. 森林隱身草叢
                 let bushGfx = sceneRef.add.graphics();
                 bushGfx.fillStyle(0x15803d, 0.75);
                 bushGfx.fillCircle(0, 0, 36);
@@ -503,26 +507,39 @@ function update() {
         }
     }
 
-    // 草叢隱身判定（玩家自己在草叢呈半透明 0.4，其他敵人在草叢呈完全隱形 0）
+    // 本機玩家草叢判定
     let inBush = false;
     sceneRef.physics.overlap(player, bushesGroup, () => { inBush = true; });
     player.setAlpha(inBush ? 0.4 : 1.0);
     player.inBush = inBush;
 
-    // 更新其他玩家隱身狀態 (對本機視角)
+    // 敵人隱身與小地圖同步隱藏邏輯
     Object.keys(otherPlayers).forEach(id => {
         let other = otherPlayers[id];
         let otherInBush = false;
         sceneRef.physics.overlap(other, bushesGroup, () => { otherInBush = true; });
+        
         other.setAlpha(otherInBush ? 0 : 1.0);
+
+        // 小地圖控制：當敵人在草叢裡時，小地圖忽略顯示該玩家
+        if (minimap) {
+            if (otherInBush) {
+                minimap.ignore(other);
+            } else {
+                // Phaser 的 ignore 需重新調用相機 restore 或重新管理，這裡以重新設置可見性控管
+                let index = minimap._ignore.indexOf(other);
+                if (index !== -1) {
+                    minimap._ignore.splice(index, 1);
+                }
+            }
+        }
     });
 
-    // 箭矢在草叢中的隱形與顯示更新
+    // 箭矢草叢顯示邏輯
     arrowsGroup.getChildren().concat(otherArrowsGroup.getChildren()).forEach(arrow => {
         let arrowInBush = false;
         sceneRef.physics.overlap(arrow, bushesGroup, () => { arrowInBush = true; });
         
-        // 若箭矢在草叢內，則敵人看不到（Alpha 0）
         if (arrow.isOwner) {
             arrow.setAlpha(arrowInBush ? 0.4 : 1.0);
         } else {
@@ -632,7 +649,6 @@ function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing, inBush) {
 
     if (isPiercing) arrow.setTint(0xf97316);
 
-    // 若發射時在草叢中，控制初始透明度
     if (inBush) {
         arrow.setAlpha(isOwner ? 0.4 : 0);
     }
