@@ -70,18 +70,28 @@
             font-size: 14px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 10; pointer-events: none;
         }
 
-        /* 正確居中彈窗樣式 */
+        /* 適合手機橫向排版的技能升級彈窗 */
         #upgrade-modal {
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 2px solid #38bdf8;
-            padding: 25px; border-radius: 24px; text-align: center; color: #fff; z-index: 100; width: 90%; max-width: 440px;
+            padding: 15px; border-radius: 20px; text-align: center; color: #fff; z-index: 100;
+            width: 95%; max-width: 520px;
         }
-        .skill-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; max-height: 60vh; overflow-y: auto; }
+        #upgrade-modal h3 { margin: 0 0 10px 0; font-size: 16px; color: #facc15; }
+        
+        .skill-grid { 
+            display: flex; flex-direction: row; justify-content: center; gap: 10px; 
+            max-height: none; overflow: visible; 
+        }
         .skill-card {
-            background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; padding: 12px 16px; border-radius: 16px;
-            cursor: pointer; display: flex; align-items: center; gap: 15px; transition: all 0.2s;
+            flex: 1; background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; 
+            padding: 10px 6px; border-radius: 12px; cursor: pointer; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            gap: 6px; transition: all 0.2s; min-width: 0;
         }
-        .skill-card:hover { border-color: #38bdf8; transform: scale(1.02); }
+        .skill-card:hover { border-color: #38bdf8; transform: scale(1.03); }
+        .skill-card b { font-size: 12px; line-height: 1.2; word-break: break-all; }
+        .skill-card i { font-size: 22px; }
     </style>
 </head>
 <body>
@@ -115,7 +125,6 @@
 
     <div id="joystick-zone"></div>
 
-    <!-- 補上 id="skill-options-container" -->
     <div id="upgrade-modal" class="animate__animated animate__fadeInDown">
         <h3><i class="fa-solid fa-wand-magic-sparkles" style="color:#facc15;"></i> 等級提升！選擇能力</h3>
         <div class="skill-grid" id="skill-options-container"></div>
@@ -139,14 +148,14 @@ let playerStats = {
     piercing: false, lifesteal: 0 
 };
 
-// 技能庫定義
+// 精簡化技能列表
 const ALL_SKILLS = [
-    { id: 'triple', name: '三連散射', desc: '一次發射 3 發箭矢', icon: 'fa-burst', color: '#38bdf8' },
-    { id: 'speed', name: '攻擊射速 UP', desc: '大幅降低射擊間隔', icon: 'fa-gauge-high', color: '#38bdf8' },
-    { id: 'moveSpeed', name: '輕盈疾跑', desc: '移動速度提升 30%', icon: 'fa-person-running', color: '#a855f7' },
-    { id: 'pierce', name: '貫穿之箭', desc: '箭矢可穿透障礙物與敵人', icon: 'fa-arrows-to-eye', color: '#f97316' },
-    { id: 'lifesteal', name: '吸血效果', desc: '造成傷害時回復 25% 血量', icon: 'fa-vial', color: '#ef4444' },
-    { id: 'hp', name: '生命上限 +50', desc: '提高生命上限並立即補血', icon: 'fa-shield-halved', color: '#10b981' }
+    { id: 'triple', name: '箭矢 +1', icon: 'fa-burst', color: '#38bdf8' },
+    { id: 'speed', name: '攻速 UP', icon: 'fa-gauge-high', color: '#38bdf8' },
+    { id: 'moveSpeed', name: '輕盈疾跑', icon: 'fa-person-running', color: '#a855f7' },
+    { id: 'pierce', name: '貫穿之箭', icon: 'fa-arrows-to-eye', color: '#f97316' },
+    { id: 'lifesteal', name: '吸血效果', icon: 'fa-vial', color: '#ef4444' },
+    { id: 'hp', name: '生命上限', icon: 'fa-shield-halved', color: '#10b981' }
 ];
 
 function checkOrientation() {
@@ -243,7 +252,6 @@ function create() {
             obstaclesGroup.add(rect);
         });
 
-        // 非貫穿箭矢碰到障礙物銷毀
         sceneRef.physics.add.overlap(arrowsGroup, obstaclesGroup, (arrow) => {
             if (!arrow.piercing) arrow.destroy();
         });
@@ -301,20 +309,17 @@ function create() {
         if (target) updateHpBar(target, data.hp, data.maxHp);
     });
 
-    // 擊殺獲得獎勵
     socket.on('killReward', (data) => {
         gainExp(data.exp);
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); // 擊殺慶祝花火
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         
         let feed = document.getElementById('kill-feed');
         feed.innerText = `💥 你擊殺了 ${data.victimName}！經驗值 +${data.exp}`;
         setTimeout(() => { feed.innerText = ''; }, 3000);
     });
 
-    // 死亡重置為 Level 1
     socket.on('playerRespawn', (data) => {
         if (data.id === socket.id) {
-            // 本人死亡重置屬性
             playerStats.level = 1;
             playerStats.exp = 0;
             playerStats.hp = 100;
@@ -346,7 +351,6 @@ function create() {
         });
     });
 
-    // 箭矢命中敵方
     sceneRef.physics.add.overlap(arrowsGroup, otherPlayersGroup, (arrow, targetContainer) => {
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
             socket.emit('hitPlayer', {
@@ -393,15 +397,21 @@ function update() {
         }
     }
 
+    // 發射箭矢邏輯（支援多箭矢動態散射）
     let now = sceneRef.time.now;
     if (now - lastFired > playerStats.fireRate) {
         lastFired = now;
-        if (playerStats.arrowCount === 1) {
+        let count = playerStats.arrowCount;
+        if (count === 1) {
             fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, playerStats.piercing);
         } else {
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle - 0.2, true, playerStats.piercing);
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, playerStats.piercing);
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle + 0.2, true, playerStats.piercing);
+            let spreadAngle = 0.3; // 總散角弧度
+            let startAngle = currentAngle - (spreadAngle / 2);
+            let step = spreadAngle / (count - 1);
+            for (let i = 0; i < count; i++) {
+                let angle = startAngle + (step * i);
+                fireArrowLocal(sceneRef, player.x, player.y, angle, true, playerStats.piercing);
+            }
         }
     }
 
@@ -508,24 +518,21 @@ function gainExp(amount) {
         playerStats.exp = 0;
         socket.emit('updateLevel', playerStats.level);
 
-        // 呼叫彈窗與隨機技能抽取
         showUpgradeModal();
 
-        // Canvas Confetti 升級彩帶
         confetti({ particleCount: 50, angle: 60, spread: 55, origin: { x: 0 } });
         confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1 } });
     }
     updateGUI();
 }
 
-// 隨機抽取 3 個技能並顯示
+// 橫向簡化版技能抽卡
 function showUpgradeModal() {
     let container = document.getElementById('skill-options-container');
     if (!container) return;
     
     container.innerHTML = '';
 
-    // 洗牌並抽取 3 個技能
     let shuffled = [...ALL_SKILLS].sort(() => 0.5 - Math.random());
     let selectedSkills = shuffled.slice(0, 3);
 
@@ -534,11 +541,8 @@ function showUpgradeModal() {
         card.className = 'skill-card';
         card.onclick = () => applySkill(skill.id);
         card.innerHTML = `
-            <i class="fa-solid ${skill.icon}" style="font-size:24px;color:${skill.color};"></i>
-            <div style="text-align:left;">
-                <b>${skill.name}</b><br>
-                <small style="color:#94a3b8;">${skill.desc}</small>
-            </div>
+            <i class="fa-solid ${skill.icon}" style="color:${skill.color};"></i>
+            <b>${skill.name}</b>
         `;
         container.appendChild(card);
     });
@@ -553,13 +557,27 @@ function updateGUI() {
     document.getElementById('gui-hp').innerText = `${playerStats.hp}/${playerStats.maxHp}`;
 }
 
+// 可無限/多階層疊加的技能效果
 function applySkill(type) {
-    if (type === 'triple') playerStats.arrowCount = 3;
-    if (type === 'speed') playerStats.fireRate = 150;
-    if (type === 'moveSpeed') playerStats.speed = 310;
-    if (type === 'pierce') playerStats.piercing = true;
-    if (type === 'lifesteal') playerStats.lifesteal = 0.25;
-    if (type === 'hp') { playerStats.maxHp += 50; playerStats.hp += 50; }
+    if (type === 'triple') {
+        playerStats.arrowCount += 1; // 每次多 1 發箭矢
+    }
+    if (type === 'speed') {
+        playerStats.fireRate = Math.max(80, Math.floor(playerStats.fireRate * 0.8)); // 降低攻擊間隔 (最低限制 80ms)
+    }
+    if (type === 'moveSpeed') {
+        playerStats.speed += 72; // 每次跑速 +30% (+72)
+    }
+    if (type === 'pierce') {
+        playerStats.piercing = true;
+    }
+    if (type === 'lifesteal') {
+        playerStats.lifesteal += 0.15; // 每次 +15% 吸血
+    }
+    if (type === 'hp') { 
+        playerStats.maxHp += 50; 
+        playerStats.hp += 50; 
+    }
     
     document.getElementById('upgrade-modal').style.display = 'none';
     updateGUI();
