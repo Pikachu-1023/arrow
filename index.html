@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>弓箭手大作戰：雙端對戰版</title>
+    <title>弓箭傳說Zhenhe</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -48,10 +48,8 @@
         }
         .stat-box { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
         
-        /* 搖桿位置調高 */
         #joystick-zone { position: absolute; bottom: 120px; left: 40px; width: 140px; height: 140px; z-index: 20; }
         
-        /* 排行榜 UI */
         #leaderboard {
             position: absolute; top: 15px; right: 15px; background: rgba(15, 23, 42, 0.8);
             border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 10px 15px;
@@ -129,7 +127,7 @@ let arrowsGroup, otherArrowsGroup, gemsGroup, obstaclesGroup;
 let cursors, wasd;
 let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
-let currentAngle = 0; // 紀錄目前玩家朝向的角度
+let currentAngle = 0;
 let playerStats = { name: '玩家', level: 1, exp: 0, hp: 100, maxHp: 100, arrowCount: 1, fireRate: 300 };
 
 function checkOrientation() {
@@ -178,7 +176,6 @@ function create() {
     sceneRef.cameras.main.setBounds(0, 0, 1600, 1200);
     sceneRef.physics.world.setBounds(0, 0, 1600, 1200);
 
-    // 建立背景網格
     let bgGraphics = sceneRef.add.graphics();
     bgGraphics.fillStyle(0x1e293b, 1);
     bgGraphics.fillRect(0, 0, 1600, 1200);
@@ -190,12 +187,9 @@ function create() {
         }
     }
 
-    arrowsGroup = sceneRef.physics.add.group({
-        runChildUpdate: true
-    });
-    otherArrowsGroup = sceneRef.physics.add.group({
-        runChildUpdate: true
-    });
+    // 正確初始化 Arcade 動態物理群組
+    arrowsGroup = sceneRef.physics.add.group({ runChildUpdate: true });
+    otherArrowsGroup = sceneRef.physics.add.group({ runChildUpdate: true });
     gemsGroup = sceneRef.physics.add.group();
     otherPlayersGroup = sceneRef.physics.add.group();
     obstaclesGroup = sceneRef.physics.add.staticGroup();
@@ -213,10 +207,8 @@ function create() {
         player.id = socket.id;
         sceneRef.cameras.main.startFollow(player, true, 0.1, 0.1);
 
-        // 設定玩家與障礙物阻擋碰撞
         sceneRef.physics.add.collider(player, obstaclesGroup);
 
-        // 右下角小地圖功能
         let minimap = sceneRef.cameras.add(window.innerWidth - 170, window.innerHeight - 130, 150, 110)
             .setZoom(0.08)
             .setName('mini');
@@ -232,7 +224,6 @@ function create() {
             obstaclesGroup.add(rect);
         });
 
-        // 箭矢碰到障礙物銷毀
         sceneRef.physics.add.overlap(arrowsGroup, obstaclesGroup, (arrow) => arrow.destroy());
         sceneRef.physics.add.overlap(otherArrowsGroup, obstaclesGroup, (arrow) => arrow.destroy());
     });
@@ -274,7 +265,7 @@ function create() {
     });
 
     socket.on('arrowFired', (data) => {
-        fireArrowLocal(sceneRef, data.x, data.y, data.angle, false, data.ownerId);
+        fireArrowLocal(sceneRef, data.x, data.y, data.angle, false);
     });
 
     socket.on('playerHealthUpdate', (data) => {
@@ -309,7 +300,6 @@ function create() {
         });
     });
 
-    // 箭矢擊中敵方玩家
     sceneRef.physics.add.overlap(arrowsGroup, otherPlayersGroup, (arrow, targetContainer) => {
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
             socket.emit('hitPlayer', targetContainer.id);
@@ -343,7 +333,6 @@ function update() {
 
     player.body.setVelocity(vx, vy);
 
-    // 計算移動角度，若正在移動則更新當前朝向
     if (vx !== 0 || vy !== 0) {
         currentAngle = Math.atan2(vy, vx);
         if (player.characterGraphics) {
@@ -351,16 +340,15 @@ function update() {
         }
     }
 
-    // 自動持續射擊：朝向玩家當前移動的方向發射
     let now = sceneRef.time.now;
     if (now - lastFired > playerStats.fireRate) {
         lastFired = now;
         if (playerStats.arrowCount === 1) {
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, socket.id);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true);
         } else {
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle - 0.2, true, socket.id);
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, socket.id);
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle + 0.2, true, socket.id);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle - 0.2, true);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle + 0.2, true);
         }
     }
 
@@ -437,40 +425,25 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gemContainer);
 }
 
-function fireArrowLocal(scene, x, y, angle, isOwner, ownerId) {
-    // 1. 建立箭矢 Sprite
-    let arrow = scene.add.sprite(x, y, 'arrowTex');
+function fireArrowLocal(scene, x, y, angle, isOwner) {
+    let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
 
-    // 2. 加入物理群組並啟用 Body
     if (isOwner) {
         arrowsGroup.add(arrow);
+        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 850 });
     } else {
         otherArrowsGroup.add(arrow);
     }
 
-    // 3. 確保 Arcade Body 啟用並寫入速度
     if (arrow.body) {
-        arrow.body.setCollideWorldBounds(false);
         scene.physics.velocityFromRotation(angle, 850, arrow.body.velocity);
     }
 
-    // 4. 若為本人發射，發送 Socket 廣播
-    if (isOwner) {
-        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 850 });
-    }
-
-    // 5. 定時銷毀箭矢
     scene.time.delayedCall(1200, () => {
         if (arrow && arrow.active) {
             arrow.destroy();
         }
-    });
-}
-
-    // 4. 超過時間自動銷毀箭矢
-    scene.time.delayedCall(1200, () => { 
-        if (arrow && arrow.active) arrow.destroy(); 
     });
 }
 
