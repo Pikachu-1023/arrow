@@ -434,8 +434,14 @@ function spawnGem(scene, gemData) {
 }
 
 function fireArrowLocal(scene, x, y, angle, isOwner) {
-    let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
+    // 1. 先建立一般的 Sprite
+    let arrow = scene.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
+
+    // 2. 手動為該 Sprite 啟用 Arcade 物理系統
+    scene.physics.world.enable(arrow);
+
+    // 3. 設定箭矢飛行速度與方向
     scene.physics.velocityFromRotation(angle, 850, arrow.body.velocity);
 
     if (isOwner) {
@@ -445,7 +451,10 @@ function fireArrowLocal(scene, x, y, angle, isOwner) {
         otherArrowsGroup.add(arrow);
     }
 
-    scene.time.delayedCall(1200, () => { if (arrow && arrow.active) arrow.destroy(); });
+    // 4. 超過時間自動銷毀箭矢
+    scene.time.delayedCall(1200, () => { 
+        if (arrow && arrow.active) arrow.destroy(); 
+    });
 }
 
 function gainExp(amount) {
