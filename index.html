@@ -47,8 +47,20 @@
             border: 1px solid rgba(255, 255, 255, 0.15); padding: 10px 25px; border-radius: 50px; color: #fff; z-index: 10;
         }
         .stat-box { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
-        #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 140px; height: 140px; z-index: 20; }
         
+        /* 搖桿位置調高 */
+        #joystick-zone { position: absolute; bottom: 120px; left: 40px; width: 140px; height: 140px; z-index: 20; }
+        
+        /* 排行榜 UI */
+        #leaderboard {
+            position: absolute; top: 15px; right: 15px; background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 10px 15px;
+            color: #fff; width: 160px; z-index: 10; font-size: 13px;
+        }
+        #leaderboard h4 { margin: 0 0 8px 0; color: #facc15; font-size: 14px; text-align: center; }
+        #leaderboard-list { list-style: none; padding: 0; margin: 0; }
+        #leaderboard-list li { display: flex; justify-content: space-between; margin-bottom: 4px; }
+
         #upgrade-modal {
             display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 2px solid #38bdf8;
@@ -83,6 +95,11 @@
         <div class="stat-box"><i class="fa-solid fa-heart" style="color:#ef4444;"></i> <span id="gui-hp">100/100</span></div>
     </div>
 
+    <div id="leaderboard">
+        <h4><i class="fa-solid fa-trophy"></i> 等級排行榜</h4>
+        <ul id="leaderboard-list"></ul>
+    </div>
+
     <div id="joystick-zone"></div>
 
     <div id="upgrade-modal">
@@ -108,10 +125,11 @@
 const socket = io();
 let game, sceneRef;
 let player, otherPlayers = {}, otherPlayersGroup;
-let arrowsGroup, otherArrowsGroup, gemsGroup;
+let arrowsGroup, otherArrowsGroup, gemsGroup, obstaclesGroup;
 let cursors, wasd;
 let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
+let currentAngle = 0; // 紀錄目前玩家朝向的角度
 let playerStats = { name: '玩家', level: 1, exp: 0, hp: 100, maxHp: 100, arrowCount: 1, fireRate: 300 };
 
 function checkOrientation() {
@@ -160,6 +178,7 @@ function create() {
     sceneRef.cameras.main.setBounds(0, 0, 1600, 1200);
     sceneRef.physics.world.setBounds(0, 0, 1600, 1200);
 
+    // 建立背景網格
     let bgGraphics = sceneRef.add.graphics();
     bgGraphics.fillStyle(0x1e293b, 1);
     bgGraphics.fillRect(0, 0, 1600, 1200);
@@ -174,7 +193,8 @@ function create() {
     arrowsGroup = sceneRef.physics.add.group();
     otherArrowsGroup = sceneRef.physics.add.group();
     gemsGroup = sceneRef.physics.add.group();
-    otherPlayersGroup = sceneRef.physics.add.group(); // 建立敵人碰撞專用群組
+    otherPlayersGroup = sceneRef.physics.add.group();
+    obstaclesGroup = sceneRef.physics.add.staticGroup();
 
     cursors = sceneRef.input.keyboard.createCursorKeys();
     wasd = sceneRef.input.keyboard.addKeys({
@@ -188,6 +208,29 @@ function create() {
         player = createPlayerContainer(sceneRef, data.x, data.y, data.name, 0x38bdf8);
         player.id = socket.id;
         sceneRef.cameras.main.startFollow(player, true, 0.1, 0.1);
+
+        // 設定玩家與障礙物阻擋碰撞
+        sceneRef.physics.add.collider(player, obstaclesGroup);
+
+        // 右下角小地圖功能
+        let minimap = sceneRef.cameras.add(window.innerWidth - 170, window.innerHeight - 130, 150, 110)
+            .setZoom(0.08)
+            .setName('mini');
+        minimap.setBackgroundColor(0x0f172a);
+        minimap.scrollX = 700;
+        minimap.scrollY = 500;
+    });
+
+    socket.on('obstaclesData', (obsList) => {
+        obsList.forEach(obs => {
+            let rect = sceneRef.add.rectangle(obs.x + obs.w / 2, obs.y + obs.h / 2, obs.w, obs.h, 0x334155)
+                .setStrokeStyle(3, 0x64748b);
+            obstaclesGroup.add(rect);
+        });
+
+        // 箭矢碰到障礙物銷毀
+        sceneRef.physics.add.overlap(arrowsGroup, obstaclesGroup, (arrow) => arrow.destroy());
+        sceneRef.physics.add.overlap(otherArrowsGroup, obstaclesGroup, (arrow) => arrow.destroy());
     });
 
     socket.on('currentPlayers', (players) => {
@@ -251,7 +294,18 @@ function create() {
         }
     });
 
-    // 正確監聽箭矢擊中敵人
+    socket.on('updateLeaderboard', (playersMap) => {
+        let listEl = document.getElementById('leaderboard-list');
+        listEl.innerHTML = '';
+        let sorted = Object.values(playersMap).sort((a, b) => b.level - a.level);
+        sorted.slice(0, 5).forEach(p => {
+            let li = document.createElement('li');
+            li.innerHTML = `<span>${p.name}</span><b>LV.${p.level}</b>`;
+            listEl.appendChild(li);
+        });
+    });
+
+    // 箭矢擊中敵方玩家
     sceneRef.physics.add.overlap(arrowsGroup, otherPlayersGroup, (arrow, targetContainer) => {
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
             socket.emit('hitPlayer', targetContainer.id);
@@ -285,27 +339,24 @@ function update() {
 
     player.body.setVelocity(vx, vy);
 
-    // 點擊判定，避開搖桿區域
-    let pointer = sceneRef.input.activePointer;
-    if (pointer.isDown) {
-        let zone = document.getElementById('joystick-zone').getBoundingClientRect();
-        let isJoystickTouch = (pointer.x >= zone.left && pointer.x <= zone.right && pointer.y >= zone.top && pointer.y <= zone.bottom);
+    // 計算移動角度，若正在移動則更新當前朝向
+    if (vx !== 0 || vy !== 0) {
+        currentAngle = Math.atan2(vy, vx);
+        if (player.characterGraphics) {
+            player.characterGraphics.setRotation(currentAngle);
+        }
+    }
 
-        if (!isJoystickTouch) {
-            let now = sceneRef.time.now;
-            if (now - lastFired > playerStats.fireRate) {
-                lastFired = now;
-                let angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.worldX, pointer.worldY);
-                if (player.characterGraphics) player.characterGraphics.setRotation(angle);
-
-                if (playerStats.arrowCount === 1) {
-                    fireArrowLocal(sceneRef, player.x, player.y, angle, true, socket.id);
-                } else {
-                    fireArrowLocal(sceneRef, player.x, player.y, angle - 0.2, true, socket.id);
-                    fireArrowLocal(sceneRef, player.x, player.y, angle, true, socket.id);
-                    fireArrowLocal(sceneRef, player.x, player.y, angle + 0.2, true, socket.id);
-                }
-            }
+    // 自動持續射擊：朝向玩家當前移動的方向發射
+    let now = sceneRef.time.now;
+    if (now - lastFired > playerStats.fireRate) {
+        lastFired = now;
+        if (playerStats.arrowCount === 1) {
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, socket.id);
+        } else {
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle - 0.2, true, socket.id);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, socket.id);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle + 0.2, true, socket.id);
         }
     }
 
@@ -365,7 +416,6 @@ function initJoystick() {
         if (data.vector) {
             moveVector.x = data.vector.x;
             moveVector.y = -data.vector.y;
-            if (player && player.characterGraphics) player.characterGraphics.setRotation(data.angle.radian);
         }
     });
     manager.on('end', () => { moveVector.x = 0; moveVector.y = 0; });
@@ -403,6 +453,7 @@ function gainExp(amount) {
     if (playerStats.exp >= playerStats.level * 100) {
         playerStats.level++;
         playerStats.exp = 0;
+        socket.emit('updateLevel', playerStats.level);
         document.getElementById('upgrade-modal').style.display = 'block';
     }
     updateGUI();

@@ -11,6 +11,15 @@ app.use(express.static(__dirname));
 let players = {};
 let gems = [];
 
+// 地圖障礙物座標列表 (x, y, width, height)
+const obstacles = [
+    { x: 300, y: 300, w: 120, h: 120 },
+    { x: 1200, y: 300, w: 120, h: 120 },
+    { x: 750, y: 550, w: 160, h: 100 },
+    { x: 300, y: 850, w: 120, h: 120 },
+    { x: 1200, y: 850, w: 120, h: 120 }
+];
+
 // 產生黃色寶石
 for (let i = 0; i < 35; i++) {
     gems.push({
@@ -23,7 +32,6 @@ for (let i = 0; i < 35; i++) {
 io.on('connection', (socket) => {
     console.log('玩家連線:', socket.id);
 
-    // 接收玩家加入與名字
     socket.on('joinGame', (data) => {
         players[socket.id] = {
             id: socket.id,
@@ -37,16 +45,15 @@ io.on('connection', (socket) => {
             rotation: 0
         };
 
-        // 發送初始資訊給新玩家
         socket.emit('initSelf', players[socket.id]);
         socket.emit('currentPlayers', players);
         socket.emit('gemsData', gems);
+        socket.emit('obstaclesData', obstacles); // 傳送障礙物資料
 
-        // 廣播給其他玩家
         socket.broadcast.emit('newPlayer', players[socket.id]);
+        io.emit('updateLeaderboard', players);
     });
 
-    // 玩家移動與旋轉同步
     socket.on('playerInput', (inputData) => {
         if (players[socket.id]) {
             players[socket.id].x = inputData.x;
@@ -56,7 +63,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 發射箭矢同步
+    socket.on('updateLevel', (level) => {
+        if (players[socket.id]) {
+            players[socket.id].level = level;
+            io.emit('updateLeaderboard', players);
+        }
+    });
+
     socket.on('shootArrow', (arrowData) => {
         socket.broadcast.emit('arrowFired', {
             ownerId: socket.id,
@@ -68,14 +81,12 @@ io.on('connection', (socket) => {
         });
     });
 
-    // 處理擊中扣血邏輯
     socket.on('hitPlayer', (targetId) => {
         if (players[targetId] && players[socket.id]) {
             let damage = 20;
             players[targetId].hp -= damage;
 
             if (players[targetId].hp <= 0) {
-                // 重置死亡玩家血量與位置
                 players[targetId].hp = players[targetId].maxHp;
                 players[targetId].x = Math.floor(Math.random() * 1400) + 100;
                 players[targetId].y = Math.floor(Math.random() * 1000) + 100;
@@ -91,28 +102,24 @@ io.on('connection', (socket) => {
         }
     });
 
-   // 吃寶石
-       socket.on('collectGem', (gemId) => {
-           const index = gems.findIndex(g => g.id === gemId);
-           if (index !== -1) {
-               // 先通知所有玩家該寶石已被吃掉
-               io.emit('gemCollected', gemId);
-   
-               // 更新寶石位置並重新生成
-               gems[index] = {
-                   id: gemId,
-                   x: Math.random() * 1500 + 50,
-                   y: Math.random() * 1100 + 50
-               };
-               io.emit('gemSpawn', gems[index]);
-           }
-       });
+    socket.on('collectGem', (gemId) => {
+        const index = gems.findIndex(g => g.id === gemId);
+        if (index !== -1) {
+            io.emit('gemCollected', gemId);
+            gems[index] = {
+                id: gemId,
+                x: Math.random() * 1500 + 50,
+                y: Math.random() * 1100 + 50
+            };
+            io.emit('gemSpawn', gems[index]);
+        }
+    });
 
-    // 離線處理
     socket.on('disconnect', () => {
         console.log('玩家離線:', socket.id);
         delete players[socket.id];
         io.emit('playerDisconnected', socket.id);
+        io.emit('updateLeaderboard', players);
     });
 });
 
