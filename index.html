@@ -10,7 +10,7 @@
     <!-- FontAwesome & NippleJS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
-    <!-- 外部動態與特效套件 (Animate.css, Canvas-Confetti, Howler, SimplexNoise) -->
+    <!-- 外部動態與特效套件 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
@@ -18,12 +18,12 @@
     
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; user-select: none; -webkit-user-select: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0f172a; touch-action: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #052e16; touch-action: none; }
         #game-container { width: 100vw; height: 100vh; position: relative; }
         
         #rotate-notice {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.98); color: #38bdf8; z-index: 9999;
+            background: rgba(5, 46, 22, 0.98); color: #38bdf8; z-index: 9999;
             flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 20px; font-weight: bold;
         }
         #rotate-notice i { font-size: 60px; margin-bottom: 20px; animation: rotateAnim 2s infinite ease-in-out; color: #fbbf24; }
@@ -31,37 +31,37 @@
 
         #login-modal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px);
+            background: rgba(5, 46, 22, 0.85); backdrop-filter: blur(16px);
             display: flex; justify-content: center; align-items: center; z-index: 200;
         }
         .login-box {
-            background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid rgba(56, 189, 248, 0.5);
+            background: linear-gradient(145deg, #14532d, #052e16); border: 2px solid rgba(74, 222, 128, 0.5);
             padding: 35px 30px; border-radius: 24px; text-align: center; color: #fff; width: 90%; max-width: 380px;
         }
-        .login-box h2 { margin-top: 0; margin-bottom: 8px; color: #38bdf8; font-size: 26px; }
-        .login-box .author-tag { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+        .login-box h2 { margin-top: 0; margin-bottom: 8px; color: #4ade80; font-size: 26px; }
+        .login-box .author-tag { color: #86efac; font-size: 14px; margin-bottom: 20px; }
         .login-box input {
-            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #334155;
-            background: rgba(15, 23, 42, 0.8); color: #fff; font-size: 16px; margin-bottom: 25px; text-align: center; outline: none;
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #166534;
+            background: rgba(5, 46, 22, 0.8); color: #fff; font-size: 16px; margin-bottom: 25px; text-align: center; outline: none;
         }
         .login-box button {
             width: 100%; padding: 14px; border-radius: 12px; border: none;
-            background: linear-gradient(135deg, #38bdf8, #0284c7); color: #fff; font-size: 18px; font-weight: bold; cursor: pointer;
+            background: linear-gradient(135deg, #22c55e, #15803d); color: #fff; font-size: 18px; font-weight: bold; cursor: pointer;
         }
 
         #top-gui {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            display: flex; align-items: center; gap: 15px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
+            display: flex; align-items: center; gap: 15px; background: rgba(5, 46, 22, 0.85); backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.15); padding: 8px 20px; border-radius: 50px; color: #fff; z-index: 10;
         }
         .stat-box { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
         
         .exp-bar-container {
-            width: 140px; height: 14px; background: rgba(30, 41, 59, 0.9);
-            border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.5); overflow: hidden; position: relative;
+            width: 140px; height: 14px; background: rgba(20, 83, 45, 0.9);
+            border-radius: 10px; border: 1px solid rgba(74, 222, 128, 0.5); overflow: hidden; position: relative;
         }
         .exp-bar-fill {
-            height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #818cf8);
+            height: 100%; width: 0%; background: linear-gradient(90deg, #4ade80, #facc15);
             transition: width 0.3s ease;
         }
         .exp-text {
@@ -72,8 +72,8 @@
         #joystick-zone { position: absolute; bottom: 120px; left: 40px; width: 140px; height: 140px; z-index: 20; }
         
         #leaderboard {
-            position: absolute; top: 15px; right: 15px; background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 10px 15px;
+            position: absolute; top: 15px; right: 15px; background: rgba(5, 46, 22, 0.85);
+            border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 12px; padding: 10px 15px;
             color: #fff; width: 160px; z-index: 10; font-size: 13px;
         }
         #leaderboard h4 { margin: 0 0 8px 0; color: #facc15; font-size: 14px; text-align: center; }
@@ -87,7 +87,7 @@
 
         #upgrade-modal {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; margin: auto;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 2px solid #38bdf8;
+            background: rgba(5, 46, 22, 0.95); backdrop-filter: blur(20px); border: 2px solid #4ade80;
             padding: 15px; border-radius: 20px; text-align: center; color: #fff; z-index: 100;
             width: 90%; max-width: 500px; height: fit-content; max-height: 85vh;
         }
@@ -98,12 +98,12 @@
             max-height: none; overflow: visible; 
         }
         .skill-card {
-            flex: 1; background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; 
+            flex: 1; background: rgba(20, 83, 45, 0.8); border: 1px solid #166534; 
             padding: 10px 6px; border-radius: 12px; cursor: pointer; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             gap: 6px; transition: all 0.2s; min-width: 0;
         }
-        .skill-card:hover { border-color: #38bdf8; transform: scale(1.03); }
+        .skill-card:hover { border-color: #4ade80; transform: scale(1.03); }
         .skill-card b { font-size: 12px; line-height: 1.2; word-break: break-all; }
         .skill-card i { font-size: 22px; }
     </style>
@@ -118,7 +118,7 @@
 <div id="login-modal">
     <div class="login-box animate__animated animate__zoomIn">
         <h2><i class="fa-solid fa-bow-arrow"></i> 箭之勇者:Zhenhe</h2>
-        <div class="author-tag">由 孫振鶴 製作</div>
+        <div class="author-tag">由 孫振賀 製作</div>
         <input type="text" id="player-name-input" placeholder="請輸入名字..." maxlength="10">
         <button onclick="startGame()">進入遊戲</button>
     </div>
@@ -128,7 +128,7 @@
     <div id="top-gui">
         <div class="stat-box"><i class="fa-solid fa-crown" style="color:#facc15;"></i> LV.<span id="gui-level">1</span></div>
         <div class="stat-box">
-            <i class="fa-solid fa-bolt" style="color:#38bdf8;"></i>
+            <i class="fa-solid fa-bolt" style="color:#4ade80;"></i>
             <div class="exp-bar-container">
                 <div class="exp-bar-fill" id="exp-bar-fill"></div>
                 <div class="exp-text" id="exp-text">0 / 100</div>
@@ -162,7 +162,6 @@ let moveVector = { x: 0, y: 0 };
 let currentAngle = 0;
 let simplex = new SimplexNoise();
 
-// 玩家屬性：血量調高至 130
 let playerStats = { 
     name: '玩家', level: 1, exp: 0, hp: 130, maxHp: 130, 
     speed: 240, arrowCount: 1, fireRate: 300, 
@@ -212,7 +211,7 @@ function initGame() {
 function create() {
     sceneRef = this;
 
-    // 箭矢繪製
+    // 箭矢圖像繪製
     let arrowGfx = sceneRef.make.graphics({x: 0, y: 0, add: false});
     arrowGfx.lineStyle(2, 0xd97706, 1);
     arrowGfx.lineBetween(0, 5, 18, 5);
@@ -225,13 +224,14 @@ function create() {
     sceneRef.cameras.main.setBounds(0, 0, 1600, 1200);
     sceneRef.physics.world.setBounds(0, 0, 1600, 1200);
 
+    // 森林背景設計 (深綠草地格紋 + 森林細節)
     let bgGraphics = sceneRef.add.graphics();
-    bgGraphics.fillStyle(0x1e293b, 1);
+    bgGraphics.fillStyle(0x064e3b, 1);
     bgGraphics.fillRect(0, 0, 1600, 1200);
     for (let x = 0; x < 1600; x += 80) {
         for (let y = 0; y < 1200; y += 80) {
             let isEven = ((x / 80) + (y / 80)) % 2 === 0;
-            bgGraphics.fillStyle(isEven ? 0x1e293b : 0x0f172a, 0.6);
+            bgGraphics.fillStyle(isEven ? 0x064e3b : 0x022c22, 0.7);
             bgGraphics.fillRect(x, y, 80, 80);
         }
     }
@@ -243,8 +243,8 @@ function create() {
     obstaclesGroup = sceneRef.physics.add.staticGroup();
     bushesGroup = sceneRef.physics.add.staticGroup();
 
-    // 動態生成豐富地形與草叢 (利用 Simplex Noise)
-    generateMapTerrain();
+    // 生成森林地形（豐富樹木、大小形狀不同的柱子/石頭、草叢）
+    generateForestTerrain();
 
     cursors = sceneRef.input.keyboard.createCursorKeys();
     wasd = sceneRef.input.keyboard.addKeys({
@@ -264,7 +264,7 @@ function create() {
         let minimap = sceneRef.cameras.add(window.innerWidth - 170, window.innerHeight - 130, 150, 110)
             .setZoom(0.08)
             .setName('mini');
-        minimap.setBackgroundColor(0x0f172a);
+        minimap.setBackgroundColor(0x022c22);
         minimap.scrollX = 700;
         minimap.scrollY = 500;
     });
@@ -298,6 +298,9 @@ function create() {
             if (otherPlayers[info.id].characterGraphics) {
                 otherPlayers[info.id].characterGraphics.setRotation(info.rotation);
             }
+            if (info.inBush !== undefined) {
+                otherPlayers[info.id].inBush = info.inBush;
+            }
         }
     });
 
@@ -315,7 +318,7 @@ function create() {
     });
 
     socket.on('arrowFired', (data) => {
-        fireArrowLocal(sceneRef, data.x, data.y, data.angle, false, data.piercing);
+        fireArrowLocal(sceneRef, data.x, data.y, data.angle, false, data.piercing, data.inBush);
     });
 
     socket.on('playerHealthUpdate', (data) => {
@@ -369,7 +372,6 @@ function create() {
         });
     });
 
-    // 傷害微調：傷害改為 15 (原 20)
     sceneRef.physics.add.overlap(arrowsGroup, otherPlayersGroup, (arrow, targetContainer) => {
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
             socket.emit('hitPlayer', {
@@ -385,35 +387,84 @@ function create() {
     });
 }
 
-// 豐富地形生成：岩石與草叢
-function generateMapTerrain() {
-    for (let x = 100; x < 1500; x += 120) {
-        for (let y = 100; y < 1100; y += 120) {
+// 森林地圖與各式柱子/石頭生成機制
+function generateForestTerrain() {
+    // 1. 裝飾性樹木 (純視覺背景)
+    for (let i = 0; i < 40; i++) {
+        let tx = Phaser.Math.Between(50, 1550);
+        let ty = Phaser.Math.Between(50, 1150);
+        let treeGfx = sceneRef.add.graphics();
+        
+        // 樹幹與樹冠
+        treeGfx.fillStyle(0x78350f, 1);
+        treeGfx.fillRect(tx - 6, ty - 5, 12, 20);
+        treeGfx.fillStyle(0x14532d, 0.85);
+        treeGfx.fillCircle(tx, ty - 20, 28);
+        treeGfx.fillStyle(0x166534, 0.9);
+        treeGfx.fillCircle(tx - 8, ty - 25, 20);
+        treeGfx.fillCircle(tx + 8, ty - 18, 18);
+        treeGfx.setDepth(1);
+    }
+
+    // 2. 隨機生成各式形狀與大小的石柱/柱子 (障礙物)
+    for (let x = 120; x < 1500; x += 130) {
+        for (let y = 120; y < 1100; y += 130) {
             let noiseVal = simplex.noise2D(x * 0.003, y * 0.003);
-            if (noiseVal > 0.45) {
-                // 岩石障礙物 (多邊形/不規則圖案)
-                let rockGfx = sceneRef.add.graphics();
-                rockGfx.fillStyle(0x475569, 1);
-                rockGfx.fillCircle(0, 0, 24);
-                rockGfx.lineStyle(2, 0x94a3b8, 1);
-                rockGfx.strokeCircle(0, 0, 24);
-                
-                let container = sceneRef.add.container(x, y, [rockGfx]);
-                sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
-                container.body.setCircle(22, -22, -22);
+            
+            if (noiseVal > 0.35) {
+                let pillarGfx = sceneRef.add.graphics();
+                let type = Math.floor(Math.abs(noiseVal * 10)) % 3; // 3種柱子類型
+                let container = sceneRef.add.container(x, y);
+
+                if (type === 0) {
+                    // 大型圓柱
+                    pillarGfx.fillStyle(0x334155, 1);
+                    pillarGfx.fillCircle(0, 0, 32);
+                    pillarGfx.lineStyle(3, 0x64748b, 1);
+                    pillarGfx.strokeCircle(0, 0, 32);
+                    
+                    container.add(pillarGfx);
+                    sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
+                    container.body.setCircle(30, -30, -30);
+                } else if (type === 1) {
+                    // 小型細柱
+                    pillarGfx.fillStyle(0x475569, 1);
+                    pillarGfx.fillCircle(0, 0, 18);
+                    pillarGfx.lineStyle(2, 0x94a3b8, 1);
+                    pillarGfx.strokeCircle(0, 0, 18);
+
+                    container.add(pillarGfx);
+                    sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
+                    container.body.setCircle(16, -16, -16);
+                } else {
+                    // 矩形/多邊形方形柱
+                    pillarGfx.fillStyle(0x1e293b, 1);
+                    pillarGfx.fillRect(-25, -25, 50, 50);
+                    pillarGfx.lineStyle(3, 0x475569, 1);
+                    pillarGfx.strokeRect(-25, -25, 50, 50);
+
+                    container.add(pillarGfx);
+                    sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
+                    container.body.setSize(48, 48);
+                    container.body.setOffset(-24, -24);
+                }
+
+                container.setDepth(5);
                 obstaclesGroup.add(container);
-            } else if (noiseVal < -0.4) {
-                // 草叢障礙區域 (隱身草叢)
+            } 
+            else if (noiseVal < -0.35) {
+                // 3. 森林隱身草叢
                 let bushGfx = sceneRef.add.graphics();
-                bushGfx.fillStyle(0x15803d, 0.7);
-                bushGfx.fillCircle(0, 0, 32);
-                bushGfx.fillStyle(0x16a34a, 0.8);
-                bushGfx.fillCircle(-8, -6, 20);
-                bushGfx.fillCircle(10, 8, 22);
+                bushGfx.fillStyle(0x15803d, 0.75);
+                bushGfx.fillCircle(0, 0, 36);
+                bushGfx.fillStyle(0x22c55e, 0.65);
+                bushGfx.fillCircle(-10, -8, 22);
+                bushGfx.fillCircle(12, 10, 24);
 
                 let bushContainer = sceneRef.add.container(x, y, [bushGfx]);
                 sceneRef.physics.world.enable(bushContainer, Phaser.Physics.Arcade.STATIC_BODY);
-                bushContainer.body.setCircle(30, -30, -30);
+                bushContainer.body.setCircle(34, -34, -34);
+                bushContainer.setDepth(4);
                 bushesGroup.add(bushContainer);
             }
         }
@@ -423,6 +474,7 @@ function generateMapTerrain() {
 function addOtherPlayer(id, data) {
     let p = createPlayerContainer(sceneRef, data.x, data.y, data.name, 0xef4444);
     p.id = id;
+    p.inBush = false;
     otherPlayers[id] = p;
     otherPlayersGroup.add(p);
 }
@@ -451,10 +503,32 @@ function update() {
         }
     }
 
-    // 草叢隱身機制
+    // 草叢隱身判定（玩家自己在草叢呈半透明 0.4，其他敵人在草叢呈完全隱形 0）
     let inBush = false;
     sceneRef.physics.overlap(player, bushesGroup, () => { inBush = true; });
     player.setAlpha(inBush ? 0.4 : 1.0);
+    player.inBush = inBush;
+
+    // 更新其他玩家隱身狀態 (對本機視角)
+    Object.keys(otherPlayers).forEach(id => {
+        let other = otherPlayers[id];
+        let otherInBush = false;
+        sceneRef.physics.overlap(other, bushesGroup, () => { otherInBush = true; });
+        other.setAlpha(otherInBush ? 0 : 1.0);
+    });
+
+    // 箭矢在草叢中的隱形與顯示更新
+    arrowsGroup.getChildren().concat(otherArrowsGroup.getChildren()).forEach(arrow => {
+        let arrowInBush = false;
+        sceneRef.physics.overlap(arrow, bushesGroup, () => { arrowInBush = true; });
+        
+        // 若箭矢在草叢內，則敵人看不到（Alpha 0）
+        if (arrow.isOwner) {
+            arrow.setAlpha(arrowInBush ? 0.4 : 1.0);
+        } else {
+            arrow.setAlpha(arrowInBush ? 0 : 1.0);
+        }
+    });
 
     // 射擊邏輯
     let now = sceneRef.time.now;
@@ -462,20 +536,20 @@ function update() {
         lastFired = now;
         let count = playerStats.arrowCount;
         if (count === 1) {
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, playerStats.piercing);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, playerStats.piercing, inBush);
         } else {
             let spreadAngle = 0.3;
             let startAngle = currentAngle - (spreadAngle / 2);
             let step = spreadAngle / (count - 1);
             for (let i = 0; i < count; i++) {
                 let angle = startAngle + (step * i);
-                fireArrowLocal(sceneRef, player.x, player.y, angle, true, playerStats.piercing);
+                fireArrowLocal(sceneRef, player.x, player.y, angle, true, playerStats.piercing, inBush);
             }
         }
     }
 
     let rotation = player.characterGraphics ? player.characterGraphics.rotation : 0;
-    socket.emit('playerInput', { x: player.x, y: player.y, rotation: rotation });
+    socket.emit('playerInput', { x: player.x, y: player.y, rotation: rotation, inBush: inBush });
 
     sceneRef.physics.overlap(player, gemsGroup, (p, gem) => {
         socket.emit('collectGem', gem.id);
@@ -499,12 +573,13 @@ function createPlayerContainer(scene, x, y, nameText, colorHex) {
 
     container.characterGraphics = charGfx;
 
-    let name = scene.add.text(0, -45, nameText, { font: 'bold 13px Arial', fill: '#ffffff', stroke: '#0f172a', strokeThickness: 4 }).setOrigin(0.5);
-    let hpBg = scene.add.rectangle(0, -30, 44, 8, 0x0f172a).setStrokeStyle(1, 0x475569);
-    let hpBar = scene.add.rectangle(-21, -30, 42, 6, 0x10b981).setOrigin(0, 0.5);
+    let name = scene.add.text(0, -45, nameText, { font: 'bold 13px Arial', fill: '#ffffff', stroke: '#052e16', strokeThickness: 4 }).setOrigin(0.5);
+    let hpBg = scene.add.rectangle(0, -30, 44, 8, 0x052e16).setStrokeStyle(1, 0x166534);
+    let hpBar = scene.add.rectangle(-21, -30, 42, 6, 0x22c55e).setOrigin(0, 0.5);
 
     container.add([shadow, charGfx, name, hpBg, hpBar]);
     container.hpBar = hpBar;
+    container.setDepth(10);
 
     scene.physics.world.enable(container);
     container.body.setCircle(20, -20, -20);
@@ -541,22 +616,30 @@ function spawnGem(scene, gemData) {
     gemGfx.fillStyle(0xfacc15, 1); gemGfx.fillCircle(0, 0, 7);
     gemContainer.add(gemGfx);
     gemContainer.id = gemData.id;
+    gemContainer.setDepth(3);
 
     scene.physics.world.enable(gemContainer);
     gemContainer.body.setCircle(7, -7, -7);
     gemsGroup.add(gemContainer);
 }
 
-function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing) {
+function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing, inBush) {
     let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
     arrow.piercing = isPiercing;
+    arrow.isOwner = isOwner;
+    arrow.setDepth(8);
 
     if (isPiercing) arrow.setTint(0xf97316);
 
+    // 若發射時在草叢中，控制初始透明度
+    if (inBush) {
+        arrow.setAlpha(isOwner ? 0.4 : 0);
+    }
+
     if (isOwner) {
         arrowsGroup.add(arrow);
-        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 750, piercing: isPiercing });
+        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 750, piercing: isPiercing, inBush: inBush });
     } else {
         otherArrowsGroup.add(arrow);
     }
