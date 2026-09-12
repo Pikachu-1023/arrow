@@ -17,12 +17,12 @@
     
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; user-select: none; -webkit-user-select: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #052e16; touch-action: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #022c22; touch-action: none; }
         #game-container { width: 100vw; height: 100vh; position: relative; }
         
         #rotate-notice {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 46, 22, 0.98); color: #38bdf8; z-index: 9999;
+            background: rgba(2, 44, 34, 0.98); color: #38bdf8; z-index: 9999;
             flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 20px; font-weight: bold;
         }
         #rotate-notice i { font-size: 60px; margin-bottom: 20px; animation: rotateAnim 2s infinite ease-in-out; color: #fbbf24; }
@@ -30,12 +30,13 @@
 
         #login-modal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 46, 22, 0.85); backdrop-filter: blur(16px);
+            background: rgba(2, 44, 34, 0.85); backdrop-filter: blur(16px);
             display: flex; justify-content: center; align-items: center; z-index: 200;
         }
         .login-box {
-            background: linear-gradient(145deg, #14532d, #052e16); border: 2px solid rgba(74, 222, 128, 0.5);
+            background: linear-gradient(145deg, #065f46, #022c22); border: 2px solid rgba(74, 222, 128, 0.5);
             padding: 35px 30px; border-radius: 24px; text-align: center; color: #fff; width: 90%; max-width: 380px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         .login-box h2 { margin-top: 0; margin-bottom: 8px; color: #4ade80; font-size: 26px; }
         .login-box .author-tag { color: #86efac; font-size: 14px; margin-bottom: 20px; }
@@ -46,12 +47,13 @@
         .login-box button {
             width: 100%; padding: 14px; border-radius: 12px; border: none;
             background: linear-gradient(135deg, #22c55e, #15803d); color: #fff; font-size: 18px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
         }
 
         #top-gui {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            display: flex; align-items: center; gap: 15px; background: rgba(5, 46, 22, 0.85); backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15); padding: 8px 20px; border-radius: 50px; color: #fff; z-index: 10;
+            display: flex; align-items: center; gap: 15px; background: rgba(2, 44, 34, 0.85); backdrop-filter: blur(12px);
+            border: 1px solid rgba(74, 222, 128, 0.3); padding: 8px 20px; border-radius: 50px; color: #fff; z-index: 10;
         }
         .stat-box { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
         
@@ -71,9 +73,9 @@
         #joystick-zone { position: absolute; bottom: 120px; left: 40px; width: 140px; height: 140px; z-index: 20; }
         
         #leaderboard {
-            position: absolute; top: 15px; right: 15px; background: rgba(5, 46, 22, 0.85);
+            position: absolute; top: 15px; right: 15px; background: rgba(2, 44, 34, 0.85);
             border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 12px; padding: 10px 15px;
-            color: #fff; width: 160px; z-index: 10; font-size: 13px;
+            color: #fff; width: 160px; z-index: 10; font-size: 13px; backdrop-filter: blur(8px);
         }
         #leaderboard h4 { margin: 0 0 8px 0; color: #facc15; font-size: 14px; text-align: center; }
         #leaderboard-list { list-style: none; padding: 0; margin: 0; }
@@ -86,25 +88,27 @@
 
         #upgrade-modal {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; margin: auto;
-            background: rgba(5, 46, 22, 0.95); backdrop-filter: blur(20px); border: 2px solid #4ade80;
-            padding: 15px; border-radius: 20px; text-align: center; color: #fff; z-index: 100;
-            width: 90%; max-width: 500px; height: fit-content; max-height: 85vh;
+            background: rgba(2, 44, 34, 0.95); backdrop-filter: blur(20px); border: 2px solid #4ade80;
+            padding: 20px; border-radius: 20px; text-align: center; color: #fff; z-index: 100;
+            width: 90%; max-width: 520px; height: fit-content; max-height: 85vh;
+            box-shadow: 0 0 30px rgba(74, 222, 128, 0.3);
         }
-        #upgrade-modal h3 { margin: 0 0 10px 0; font-size: 16px; color: #facc15; }
+        #upgrade-modal h3 { margin: 0 0 15px 0; font-size: 18px; color: #facc15; }
         
         .skill-grid { 
-            display: flex; flex-direction: row; justify-content: center; gap: 10px; 
+            display: flex; flex-direction: row; justify-content: center; gap: 12px; 
             max-height: none; overflow: visible; 
         }
         .skill-card {
             flex: 1; background: rgba(20, 83, 45, 0.8); border: 1px solid #166534; 
-            padding: 10px 6px; border-radius: 12px; cursor: pointer; 
+            padding: 12px 8px; border-radius: 14px; cursor: pointer; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            gap: 6px; transition: all 0.2s; min-width: 0;
+            gap: 8px; transition: all 0.2s; min-width: 0;
         }
-        .skill-card:hover { border-color: #4ade80; transform: scale(1.03); }
-        .skill-card b { font-size: 12px; line-height: 1.2; word-break: break-all; }
-        .skill-card i { font-size: 22px; }
+        .skill-card:hover { border-color: #4ade80; transform: scale(1.05); background: rgba(22, 101, 52, 0.9); }
+        .skill-card b { font-size: 13px; line-height: 1.2; word-break: break-all; }
+        .skill-card i { font-size: 26px; }
+        .skill-card span { font-size: 10px; color: #9ca3af; text-align: center; }
     </style>
 </head>
 <body>
@@ -117,7 +121,7 @@
 <div id="login-modal">
     <div class="login-box animate__animated animate__zoomIn">
         <h2><i class="fa-solid fa-bow-arrow"></i> 箭之勇者:Zhenhe</h2>
-        <div class="author-tag">由 孫振賀 製作</div>
+        <div class="author-tag">由 孫振賀 製作[cite: 13]</div>
         <input type="text" id="player-name-input" placeholder="請輸入名字..." maxlength="10">
         <button onclick="startGame()">進入遊戲</button>
     </div>
@@ -160,6 +164,9 @@ let lastFired = 0;
 let moveVector = { x: 0, y: 0 };
 let currentAngle = 0;
 
+const MAP_WIDTH = 2800;
+const MAP_HEIGHT = 2000;
+
 function seededRandom(seed) {
     let x = Math.sin(seed++) * 10000;
     return x - Math.floor(x);
@@ -169,31 +176,33 @@ let seedCounter = 12345;
 let simplex = new SimplexNoise(() => seededRandom(seedCounter++));
 
 let playerStats = { 
-    name: '玩家', level: 1, exp: 0, hp: 130, maxHp: 130, shield: 0,
+    name: '玩家', level: 1, exp: 0, hp: 130, maxHp: 130, shield: 0, maxShield: 100,
     speed: 240, arrowCount: 1, fireRate: 300, 
     piercing: false, lifesteal: 0,
-    // 新增技能屬性
+    // 技能屬性
     hasShield: false,
     hasBerserk: false,
     hasPoison: false,
+    hasFrost: false,
+    hasExplosive: false,
     arrowScale: 1.0,
     swiftCooldon: 1.0
 };
 
-// 技能庫（原 6 項 + 新增 5 項 = 共 11 項）
+// 技能庫（11 項技能，每次隨機抽 3 個）
 const ALL_SKILLS = [
-    { id: 'triple', name: '箭矢 +1', icon: 'fa-burst', color: '#38bdf8' },
-    { id: 'speed', name: '攻速 UP', icon: 'fa-gauge-high', color: '#38bdf8' },
-    { id: 'moveSpeed', name: '輕盈疾跑', icon: 'fa-person-running', color: '#a855f7' },
-    { id: 'pierce', name: '貫穿之箭', icon: 'fa-arrows-to-eye', color: '#f97316' },
-    { id: 'lifesteal', name: '吸血效果', icon: 'fa-vial', color: '#ef4444' },
-    { id: 'hp', name: '生命上限', icon: 'fa-shield-halved', color: '#10b981' },
-    // 5 個新技能
-    { id: 'shield', name: '聖光護盾', icon: 'fa-shield-cat', color: '#facc15' },
-    { id: 'berserk', name: '絕境狂暴', icon: 'fa-fire', color: '#dc2626' },
-    { id: 'poison', name: '劇毒陷阱', icon: 'fa-skull-crossbones', color: '#84cc16' },
-    { id: 'giant', name: '巨化箭矢', icon: 'fa-expand', color: '#3b82f6' },
-    { id: 'swift', name: '極速連射', icon: 'fa-forward-fast', color: '#06b6d4' }
+    { id: 'triple', name: '箭矢 +1', desc: '多發射一支箭矢', icon: 'fa-burst', color: '#38bdf8' },
+    { id: 'speed', name: '攻速 UP', desc: '提升射擊速度', icon: 'fa-gauge-high', color: '#38bdf8' },
+    { id: 'moveSpeed', name: '輕盈疾跑', desc: '提升移動速度', icon: 'fa-person-running', color: '#a855f7' },
+    { id: 'pierce', name: '貫穿之箭', desc: '箭矢穿透障礙物', icon: 'fa-arrows-to-eye', color: '#f97316' },
+    { id: 'lifesteal', name: '吸血光環', desc: '命中時恢復生命', icon: 'fa-vial', color: '#ef4444' },
+    { id: 'hp', name: '生命上限', desc: '增加最大血量', icon: 'fa-heart-pulse', color: '#10b981' },
+    // 5 個新技能與屬性
+    { id: 'shield', name: '聖光護盾', desc: '獲得防護罩與護盾', icon: 'fa-shield-halved', color: '#facc15' },
+    { id: 'poison', name: '毒箭特化', desc: '附帶毒霧與持續傷害', icon: 'fa-flask-vial', color: '#84cc16' },
+    { id: 'frost', name: '寒霜箭矢', desc: '附帶冰霜減速效果', icon: 'fa-snowflake', color: '#06b6d4' },
+    { id: 'explosive', name: '爆裂箭頭', desc: '命中造成範圍爆炸', icon: 'fa-bomb', color: '#f43f5e' },
+    { id: 'giant', name: '巨化重箭', desc: '箭矢體積與傷害大增', icon: 'fa-expand', color: '#eab308' }
 ];
 
 function checkOrientation() {
@@ -230,27 +239,41 @@ function initGame() {
 function create() {
     sceneRef = this;
 
+    // 繪製精美箭矢紋理
     let arrowGfx = sceneRef.make.graphics({x: 0, y: 0, add: false});
     arrowGfx.lineStyle(2, 0xd97706, 1);
     arrowGfx.lineBetween(0, 5, 18, 5);
     arrowGfx.fillStyle(0xf1f5f9, 1);
-    arrowGfx.fillTriangle(18, 1, 24, 5, 18, 9);
+    arrowGfx.fillTriangle(18, 1, 26, 5, 18, 9);
     arrowGfx.fillStyle(0xef4444, 1);
     arrowGfx.fillRect(0, 2, 4, 6);
-    arrowGfx.generateTexture('arrowTex', 26, 10);
+    arrowGfx.generateTexture('arrowTex', 28, 10);
 
-    sceneRef.cameras.main.setBounds(0, 0, 1600, 1200);
-    sceneRef.physics.world.setBounds(0, 0, 1600, 1200);
+    // 擴大地圖範圍
+    sceneRef.cameras.main.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
+    sceneRef.physics.world.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
 
+    // 精美背景地圖繪製 (高質感草原與草叢雜點)
     let bgGraphics = sceneRef.add.graphics();
     bgGraphics.fillStyle(0x064e3b, 1);
-    bgGraphics.fillRect(0, 0, 1600, 1200);
-    for (let x = 0; x < 1600; x += 80) {
-        for (let y = 0; y < 1200; y += 80) {
-            let isEven = ((x / 80) + (y / 80)) % 2 === 0;
-            bgGraphics.fillStyle(isEven ? 0x064e3b : 0x022c22, 0.7);
-            bgGraphics.fillRect(x, y, 80, 80);
+    bgGraphics.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+    
+    // 棋盤格與漸層質感
+    for (let x = 0; x < MAP_WIDTH; x += 100) {
+        for (let y = 0; y < MAP_HEIGHT; y += 100) {
+            let isEven = ((x / 100) + (y / 100)) % 2 === 0;
+            bgGraphics.fillStyle(isEven ? 0x065f46 : 0x044e39, 0.8);
+            bgGraphics.fillRect(x, y, 100, 100);
         }
+    }
+
+    // 地圖裝飾：隨機細節小草點綴
+    let decoSeed = 999;
+    for (let i = 0; i < 300; i++) {
+        let dx = seededRandom(decoSeed++) * MAP_WIDTH;
+        let dy = seededRandom(decoSeed++) * MAP_HEIGHT;
+        bgGraphics.fillStyle(0x10b981, 0.3);
+        bgGraphics.fillCircle(dx, dy, Math.floor(seededRandom(decoSeed++) * 3) + 1);
     }
 
     arrowsGroup = sceneRef.physics.add.group({ runChildUpdate: true });
@@ -273,16 +296,16 @@ function create() {
     socket.on('initSelf', (data) => {
         player = createPlayerContainer(sceneRef, data.x, data.y, data.name, 0x38bdf8);
         player.id = socket.id;
-        sceneRef.cameras.main.startFollow(player, true, 0.1, 0.1);
+        sceneRef.cameras.main.startFollow(player, true, 0.08, 0.08);
 
         sceneRef.physics.add.collider(player, obstaclesGroup);
 
         minimap = sceneRef.cameras.add(window.innerWidth - 170, window.innerHeight - 130, 150, 110)
-            .setZoom(0.08)
+            .setZoom(0.05)
             .setName('mini');
         minimap.setBackgroundColor(0x022c22);
-        minimap.scrollX = 700;
-        minimap.scrollY = 500;
+        minimap.scrollX = MAP_WIDTH / 2;
+        minimap.scrollY = MAP_HEIGHT / 2;
     });
 
     socket.on('obstaclesData', (obsList) => {
@@ -334,17 +357,16 @@ function create() {
     });
 
     socket.on('arrowFired', (data) => {
-        fireArrowLocal(sceneRef, data.x, data.y, data.angle, false, data.piercing, data.inBush, data.scale);
+        fireArrowLocal(sceneRef, data.x, data.y, data.angle, false, data.piercing, data.inBush, data.scale, data.effects);
     });
 
     socket.on('playerHealthUpdate', (data) => {
         if (data.id === socket.id) {
-            // 計算護盾抵扣
             let dmg = playerStats.hp - data.hp;
             if (dmg > 0 && playerStats.shield > 0) {
                 if (playerStats.shield >= dmg) {
                     playerStats.shield -= dmg;
-                    data.hp = playerStats.hp; // 護盾吸滿
+                    data.hp = playerStats.hp; 
                 } else {
                     data.hp += playerStats.shield;
                     playerStats.shield = 0;
@@ -354,12 +376,12 @@ function create() {
             updateGUI();
         }
         let target = (data.id === socket.id) ? player : otherPlayers[data.id];
-        if (target) updateHpBar(target, data.hp, data.maxHp);
+        if (target) updateHpBar(target, data.hp, data.maxHp, (data.id === socket.id ? playerStats.shield : 0));
     });
 
     socket.on('killReward', (data) => {
         gainExp(data.exp);
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         
         let feed = document.getElementById('kill-feed');
         feed.innerText = `💥 你擊殺了 ${data.victimName}！經驗值 +${data.exp}`;
@@ -379,15 +401,18 @@ function create() {
             playerStats.piercing = false;
             playerStats.lifesteal = 0;
             playerStats.arrowScale = 1.0;
-            playerStats.swiftCooldon = 1.0;
+            playerStats.hasShield = false;
+            playerStats.hasPoison = false;
+            playerStats.hasFrost = false;
+            playerStats.hasExplosive = false;
 
             player.setPosition(data.x, data.y);
             socket.emit('updateLevel', 1);
             updateGUI();
-            updateHpBar(player, 130, 130);
+            updateHpBar(player, 130, 130, 0);
         } else if (otherPlayers[data.id]) {
             otherPlayers[data.id].setPosition(data.x, data.y);
-            updateHpBar(otherPlayers[data.id], data.hp, data.maxHp);
+            updateHpBar(otherPlayers[data.id], data.hp, data.maxHp, 0);
         }
     });
 
@@ -402,10 +427,27 @@ function create() {
         });
     });
 
+    // 箭矢擊中敵人邏輯與豐富打擊特效
     sceneRef.physics.add.overlap(arrowsGroup, otherPlayersGroup, (arrow, targetContainer) => {
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
             let baseDmg = 15;
-            if (playerStats.hasPoison) baseDmg += 5; // 劇毒額外傷害
+            if (playerStats.hasPoison) baseDmg += 6; 
+
+            // 特效：爆裂火花
+            if (arrow.effects && arrow.effects.explosive) {
+                createExplosionFX(sceneRef, arrow.x, arrow.y);
+                baseDmg += 10;
+            }
+
+            // 特效：冰霜減速/特效
+            if (arrow.effects && arrow.effects.frost) {
+                createFrostFX(sceneRef, targetContainer.x, targetContainer.y);
+            }
+
+            // 特效：毒氣殘影
+            if (arrow.effects && arrow.effects.poison) {
+                createPoisonFX(sceneRef, targetContainer.x, targetContainer.y);
+            }
 
             socket.emit('hitPlayer', {
                 targetId: targetContainer.id,
@@ -420,26 +462,64 @@ function create() {
     });
 }
 
+// 動態特效生成：爆炸
+function createExplosionFX(scene, x, y) {
+    let circle = scene.add.circle(x, y, 10, 0xf43f5e, 0.8);
+    scene.tweens.add({
+        targets: circle,
+        radius: 45,
+        alpha: 0,
+        duration: 300,
+        onComplete: () => circle.destroy()
+    });
+}
+
+// 動態特效生成：冰霜
+function createFrostFX(scene, x, y) {
+    for (let i = 0; i < 6; i++) {
+        let p = scene.add.circle(x + (Math.random()*30 - 15), y + (Math.random()*30 - 15), 4, 0x38bdf8, 0.9);
+        scene.tweens.add({
+            targets: p,
+            scale: 0,
+            duration: 400,
+            onComplete: () => p.destroy()
+        });
+    }
+}
+
+// 動態特效生成：毒霧
+function createPoisonFX(scene, x, y) {
+    let cloud = scene.add.circle(x, y, 15, 0x84cc16, 0.6);
+    scene.tweens.add({
+        targets: cloud,
+        scale: 2,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => cloud.destroy()
+    });
+}
+
 function generateForestTerrain() {
     let treeSeed = 8888;
-    for (let i = 0; i < 40; i++) {
-        let tx = Math.floor(seededRandom(treeSeed++) * 1500) + 50;
-        let ty = Math.floor(seededRandom(treeSeed++) * 1100) + 50;
+    // 依據更大地圖增加樹木
+    for (let i = 0; i < 80; i++) {
+        let tx = Math.floor(seededRandom(treeSeed++) * (MAP_WIDTH - 100)) + 50;
+        let ty = Math.floor(seededRandom(treeSeed++) * (MAP_HEIGHT - 100)) + 50;
         let treeGfx = sceneRef.add.graphics();
         
         treeGfx.fillStyle(0x78350f, 1);
-        treeGfx.fillRect(tx - 6, ty - 5, 12, 20);
+        treeGfx.fillRect(tx - 8, ty - 5, 16, 26);
         treeGfx.fillStyle(0x14532d, 0.85);
-        treeGfx.fillCircle(tx, ty - 20, 28);
+        treeGfx.fillCircle(tx, ty - 25, 34);
         treeGfx.fillStyle(0x166534, 0.9);
-        treeGfx.fillCircle(tx - 8, ty - 25, 20);
-        treeGfx.fillCircle(tx + 8, ty - 18, 18);
+        treeGfx.fillCircle(tx - 10, ty - 30, 24);
+        treeGfx.fillCircle(tx + 10, ty - 22, 22);
         treeGfx.setDepth(1);
     }
 
-    for (let x = 120; x < 1500; x += 130) {
-        for (let y = 120; y < 1100; y += 130) {
-            let noiseVal = simplex.noise2D(x * 0.003, y * 0.003);
+    for (let x = 150; x < MAP_WIDTH - 100; x += 140) {
+        for (let y = 150; y < MAP_HEIGHT - 100; y += 140) {
+            let noiseVal = simplex.noise2D(x * 0.002, y * 0.002);
             
             if (noiseVal > 0.35) {
                 let pillarGfx = sceneRef.add.graphics();
@@ -448,32 +528,32 @@ function generateForestTerrain() {
 
                 if (type === 0) {
                     pillarGfx.fillStyle(0x334155, 1);
-                    pillarGfx.fillCircle(0, 0, 32);
+                    pillarGfx.fillCircle(0, 0, 36);
                     pillarGfx.lineStyle(3, 0x64748b, 1);
-                    pillarGfx.strokeCircle(0, 0, 32);
+                    pillarGfx.strokeCircle(0, 0, 36);
                     
                     container.add(pillarGfx);
                     sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
-                    container.body.setCircle(30, -30, -30);
+                    container.body.setCircle(34, -34, -34);
                 } else if (type === 1) {
                     pillarGfx.fillStyle(0x475569, 1);
-                    pillarGfx.fillCircle(0, 0, 18);
+                    pillarGfx.fillCircle(0, 0, 22);
                     pillarGfx.lineStyle(2, 0x94a3b8, 1);
-                    pillarGfx.strokeCircle(0, 0, 18);
+                    pillarGfx.strokeCircle(0, 0, 22);
 
                     container.add(pillarGfx);
                     sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
-                    container.body.setCircle(16, -16, -16);
+                    container.body.setCircle(20, -20, -20);
                 } else {
                     pillarGfx.fillStyle(0x1e293b, 1);
-                    pillarGfx.fillRect(-25, -25, 50, 50);
+                    pillarGfx.fillRect(-28, -28, 56, 56);
                     pillarGfx.lineStyle(3, 0x475569, 1);
-                    pillarGfx.strokeRect(-25, -25, 50, 50);
+                    pillarGfx.strokeRect(-28, -28, 56, 56);
 
                     container.add(pillarGfx);
                     sceneRef.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
-                    container.body.setSize(48, 48);
-                    container.body.setOffset(-24, -24);
+                    container.body.setSize(54, 54);
+                    container.body.setOffset(-27, -27);
                 }
 
                 container.setDepth(5);
@@ -482,14 +562,14 @@ function generateForestTerrain() {
             else if (noiseVal < -0.35) {
                 let bushGfx = sceneRef.add.graphics();
                 bushGfx.fillStyle(0x15803d, 0.75);
-                bushGfx.fillCircle(0, 0, 36);
+                bushGfx.fillCircle(0, 0, 42);
                 bushGfx.fillStyle(0x22c55e, 0.65);
-                bushGfx.fillCircle(-10, -8, 22);
-                bushGfx.fillCircle(12, 10, 24);
+                bushGfx.fillCircle(-12, -10, 26);
+                bushGfx.fillCircle(14, 12, 28);
 
                 let bushContainer = sceneRef.add.container(x, y, [bushGfx]);
                 sceneRef.physics.world.enable(bushContainer, Phaser.Physics.Arcade.STATIC_BODY);
-                bushContainer.body.setCircle(34, -34, -34);
+                bushContainer.body.setCircle(40, -40, -40);
                 bushContainer.setDepth(4);
                 bushesGroup.add(bushContainer);
             }
@@ -508,13 +588,8 @@ function addOtherPlayer(id, data) {
 function update() {
     if (!player || !player.body) return;
 
-    // 狂暴被動判定
     let currentSpeed = playerStats.speed;
     let currentFireRate = playerStats.fireRate * playerStats.swiftCooldon;
-    if (playerStats.hasBerserk && (playerStats.hp / playerStats.maxHp) < 0.5) {
-        currentSpeed *= 1.3;
-        currentFireRate *= 0.7;
-    }
 
     let vx = 0, vy = 0;
 
@@ -537,23 +612,24 @@ function update() {
         }
     }
 
-    // 本機玩家草叢判定
+    // 草叢隱身判定
     let inBush = false;
     sceneRef.physics.overlap(player, bushesGroup, () => { inBush = true; });
     player.setAlpha(inBush ? 0.4 : 1.0);
     player.inBush = inBush;
 
-    // 關鍵修復：完全安全的敵人草叢隱身與小地圖處理（避免卡死崩潰）
+    // 護盾金光特效更新
+    if (player.shieldGraphic) {
+        player.shieldGraphic.setVisible(playerStats.shield > 0);
+    }
+
     Object.keys(otherPlayers).forEach(id => {
         let other = otherPlayers[id];
         let otherInBush = false;
         sceneRef.physics.overlap(other, bushesGroup, () => { otherInBush = true; });
-        
-        // 單純透過 setAlpha 控制顯示，完全不會阻塞物理引擎或產生死鎖
         other.setAlpha(otherInBush ? 0 : 1.0);
     });
 
-    // 箭矢草叢顯示邏輯
     arrowsGroup.getChildren().concat(otherArrowsGroup.getChildren()).forEach(arrow => {
         let arrowInBush = false;
         sceneRef.physics.overlap(arrow, bushesGroup, () => { arrowInBush = true; });
@@ -565,20 +641,26 @@ function update() {
         }
     });
 
-    // 射擊邏輯
+    // 射擊邏輯與附帶屬性特效
     let now = sceneRef.time.now;
     if (now - lastFired > currentFireRate) {
         lastFired = now;
         let count = playerStats.arrowCount;
+        let effects = {
+            poison: playerStats.hasPoison,
+            frost: playerStats.hasFrost,
+            explosive: playerStats.hasExplosive
+        };
+
         if (count === 1) {
-            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, playerStats.piercing, inBush, playerStats.arrowScale);
+            fireArrowLocal(sceneRef, player.x, player.y, currentAngle, true, playerStats.piercing, inBush, playerStats.arrowScale, effects);
         } else {
             let spreadAngle = 0.3;
             let startAngle = currentAngle - (spreadAngle / 2);
             let step = spreadAngle / (count - 1);
             for (let i = 0; i < count; i++) {
                 let angle = startAngle + (step * i);
-                fireArrowLocal(sceneRef, player.x, player.y, angle, true, playerStats.piercing, inBush, playerStats.arrowScale);
+                fireArrowLocal(sceneRef, player.x, player.y, angle, true, playerStats.piercing, inBush, playerStats.arrowScale, effects);
             }
         }
     }
@@ -606,13 +688,22 @@ function createPlayerContainer(scene, x, y, nameText, colorHex) {
     charGfx.lineStyle(3, 0xffffff, 0.9); charGfx.strokeCircle(0, 0, 20);
     charGfx.fillStyle(0xffffff, 1); charGfx.fillCircle(8, -6, 4); charGfx.fillCircle(8, 6, 4);
 
+    // 護盾金光特效層
+    let shieldGfx = scene.add.graphics();
+    shieldGfx.lineStyle(3, 0xfacc15, 0.85);
+    shieldGfx.strokeCircle(0, 0, 27);
+    shieldGfx.fillStyle(0xfacc15, 0.15);
+    shieldGfx.fillCircle(0, 0, 27);
+    shieldGfx.setVisible(false);
+
     container.characterGraphics = charGfx;
+    container.shieldGraphic = shieldGfx;
 
     let name = scene.add.text(0, -45, nameText, { font: 'bold 13px Arial', fill: '#ffffff', stroke: '#052e16', strokeThickness: 4 }).setOrigin(0.5);
     let hpBg = scene.add.rectangle(0, -30, 44, 8, 0x052e16).setStrokeStyle(1, 0x166534);
     let hpBar = scene.add.rectangle(-21, -30, 42, 6, 0x22c55e).setOrigin(0, 0.5);
 
-    container.add([shadow, charGfx, name, hpBg, hpBar]);
+    container.add([shadow, shieldGfx, charGfx, name, hpBg, hpBar]);
     container.hpBar = hpBar;
     container.setDepth(10);
 
@@ -623,10 +714,15 @@ function createPlayerContainer(scene, x, y, nameText, colorHex) {
     return container;
 }
 
-function updateHpBar(container, hp, maxHp) {
+function updateHpBar(container, hp, maxHp, shield = 0) {
     if (container && container.hpBar) {
         let pct = Math.max(0, hp / maxHp);
         container.hpBar.width = 42 * pct;
+        if (shield > 0) {
+            container.hpBar.setFillStyle(0x38bdf8); // 有護盾時顯示為藍色血條
+        } else {
+            container.hpBar.setFillStyle(0x22c55e);
+        }
     }
 }
 
@@ -658,15 +754,26 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gemContainer);
 }
 
-function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing, inBush, scale = 1.0) {
+// 發射箭矢（含多重外觀特效及毒箭、冰霜、爆炸效果）
+function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing, inBush, scale = 1.0, effects = {}) {
     let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
     arrow.setScale(scale);
     arrow.piercing = isPiercing;
     arrow.isOwner = isOwner;
+    arrow.effects = effects;
     arrow.setDepth(8);
 
-    if (isPiercing) arrow.setTint(0xf97316);
+    // 特效染色與動態視覺
+    if (effects.poison) {
+        arrow.setTint(0x84cc16); // 毒箭綠光
+    } else if (effects.frost) {
+        arrow.setTint(0x38bdf8); // 寒霜藍光
+    } else if (effects.explosive) {
+        arrow.setTint(0xf43f5e); // 爆裂紅光
+    } else if (isPiercing) {
+        arrow.setTint(0xf97316); // 貫穿橘光
+    }
 
     if (inBush) {
         arrow.setAlpha(isOwner ? 0.4 : 0);
@@ -674,16 +781,16 @@ function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing, inBush, scale =
 
     if (isOwner) {
         arrowsGroup.add(arrow);
-        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 750, piercing: isPiercing, inBush: inBush, scale: scale });
+        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 800, piercing: isPiercing, inBush: inBush, scale: scale, effects: effects });
     } else {
         otherArrowsGroup.add(arrow);
     }
 
     if (arrow.body) {
-        scene.physics.velocityFromRotation(angle, 750, arrow.body.velocity);
+        scene.physics.velocityFromRotation(angle, 800, arrow.body.velocity);
     }
 
-    scene.time.delayedCall(500, () => {
+    scene.time.delayedCall(600, () => {
         if (arrow && arrow.active) arrow.destroy();
     });
 }
@@ -711,6 +818,7 @@ function showUpgradeModal() {
     
     container.innerHTML = '';
 
+    // 洗牌維持隨機抽取 3 個技能
     let shuffled = [...ALL_SKILLS].sort(() => 0.5 - Math.random());
     let selectedSkills = shuffled.slice(0, 3);
 
@@ -721,6 +829,7 @@ function showUpgradeModal() {
         card.innerHTML = `
             <i class="fa-solid ${skill.icon}" style="color:${skill.color};"></i>
             <b>${skill.name}</b>
+            <span>${skill.desc}</span>
         `;
         container.appendChild(card);
     });
@@ -741,19 +850,22 @@ function updateGUI() {
 function applySkill(type) {
     if (type === 'triple') playerStats.arrowCount += 1;
     if (type === 'speed') playerStats.fireRate = Math.max(80, Math.floor(playerStats.fireRate * 0.8));
-    if (type === 'moveSpeed') playerStats.speed += 72;
+    if (type === 'moveSpeed') playerStats.speed += 60;
     if (type === 'pierce') playerStats.piercing = true;
     if (type === 'lifesteal') playerStats.lifesteal += 0.15;
     if (type === 'hp') { 
         playerStats.maxHp += 50; 
         playerStats.hp += 50; 
     }
-    // 新增 5 個技能邏輯
-    if (type === 'shield') playerStats.shield += 40;
-    if (type === 'berserk') playerStats.hasBerserk = true;
+    // 5 個新技能套用 logic
+    if (type === 'shield') {
+        playerStats.hasShield = true;
+        playerStats.shield = Math.min(playerStats.maxShield, playerStats.shield + 50);
+    }
     if (type === 'poison') playerStats.hasPoison = true;
+    if (type === 'frost') playerStats.hasFrost = true;
+    if (type === 'explosive') playerStats.hasExplosive = true;
     if (type === 'giant') playerStats.arrowScale += 0.8;
-    if (type === 'swift') playerStats.swiftCooldon *= 0.6;
     
     document.getElementById('upgrade-modal').style.display = 'none';
     updateGUI();
