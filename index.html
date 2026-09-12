@@ -190,8 +190,12 @@ function create() {
         }
     }
 
-    arrowsGroup = sceneRef.physics.add.group();
-    otherArrowsGroup = sceneRef.physics.add.group();
+    arrowsGroup = sceneRef.physics.add.group({
+        runChildUpdate: true
+    });
+    otherArrowsGroup = sceneRef.physics.add.group({
+        runChildUpdate: true
+    });
     gemsGroup = sceneRef.physics.add.group();
     otherPlayersGroup = sceneRef.physics.add.group();
     obstaclesGroup = sceneRef.physics.add.staticGroup();
@@ -433,23 +437,36 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gemContainer);
 }
 
-function fireArrowLocal(scene, x, y, angle, isOwner) {
-    // 1. 先建立一般的 Sprite
+function fireArrowLocal(scene, x, y, angle, isOwner, ownerId) {
+    // 1. 建立箭矢 Sprite
     let arrow = scene.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
 
-    // 2. 手動為該 Sprite 啟用 Arcade 物理系統
-    scene.physics.world.enable(arrow);
-
-    // 3. 設定箭矢飛行速度與方向
-    scene.physics.velocityFromRotation(angle, 850, arrow.body.velocity);
-
+    // 2. 加入物理群組並啟用 Body
     if (isOwner) {
         arrowsGroup.add(arrow);
-        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 850 });
     } else {
         otherArrowsGroup.add(arrow);
     }
+
+    // 3. 確保 Arcade Body 啟用並寫入速度
+    if (arrow.body) {
+        arrow.body.setCollideWorldBounds(false);
+        scene.physics.velocityFromRotation(angle, 850, arrow.body.velocity);
+    }
+
+    // 4. 若為本人發射，發送 Socket 廣播
+    if (isOwner) {
+        socket.emit('shootArrow', { x: x, y: y, angle: angle, speed: 850 });
+    }
+
+    // 5. 定時銷毀箭矢
+    scene.time.delayedCall(1200, () => {
+        if (arrow && arrow.active) {
+            arrow.destroy();
+        }
+    });
+}
 
     // 4. 超過時間自動銷毀箭矢
     scene.time.delayedCall(1200, () => { 
