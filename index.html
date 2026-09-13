@@ -121,7 +121,7 @@
 <div id="login-modal">
     <div class="login-box animate__animated animate__zoomIn">
         <h2><i class="fa-solid fa-bow-arrow"></i> 箭之勇者:Zhenhe</h2>
-        <div class="author-tag">由 孫振賀 製作[cite: 13]</div>
+        <div class="author-tag">由 孫振賀 製作</div>
         <input type="text" id="player-name-input" placeholder="請輸入名字..." maxlength="10">
         <button onclick="startGame()">進入遊戲</button>
     </div>
@@ -176,7 +176,7 @@ let seedCounter = 12345;
 let simplex = new SimplexNoise(() => seededRandom(seedCounter++));
 
 let playerStats = { 
-    name: '玩家', level: 1, exp: 0, hp: 130, maxHp: 130, shield: 0, maxShield: 100,
+    name: '玩家', level: 1, exp: 0, hp: 500, maxHp: 500, shield: 0, maxShield: 100,
     speed: 240, arrowCount: 1, fireRate: 300, 
     piercing: false, lifesteal: 0,
     // 技能屬性
@@ -196,7 +196,7 @@ const ALL_SKILLS = [
     { id: 'moveSpeed', name: '輕盈疾跑', desc: '提升移動速度', icon: 'fa-person-running', color: '#a855f7' },
     { id: 'pierce', name: '貫穿之箭', desc: '箭矢穿透障礙物', icon: 'fa-arrows-to-eye', color: '#f97316' },
     { id: 'lifesteal', name: '吸血光環', desc: '命中時恢復生命', icon: 'fa-vial', color: '#ef4444' },
-    { id: 'hp', name: '生命上限', desc: '增加最大血量', icon: 'fa-heart-pulse', color: '#10b981' },
+    { id: 'hp', name: '生命上限', desc: '增加半格最大血量 (50 HP)', icon: 'fa-heart-pulse', color: '#10b981' },
     // 5 個新技能與屬性
     { id: 'shield', name: '聖光護盾', desc: '獲得防護罩與護盾', icon: 'fa-shield-halved', color: '#facc15' },
     { id: 'poison', name: '毒箭特化', desc: '附帶毒霧與持續傷害', icon: 'fa-flask-vial', color: '#84cc16' },
@@ -392,8 +392,8 @@ function create() {
         if (data.id === socket.id) {
             playerStats.level = 1;
             playerStats.exp = 0;
-            playerStats.hp = 130;
-            playerStats.maxHp = 130;
+            playerStats.hp = 500;
+            playerStats.maxHp = 500;
             playerStats.shield = 0;
             playerStats.speed = 240;
             playerStats.arrowCount = 1;
@@ -409,7 +409,7 @@ function create() {
             player.setPosition(data.x, data.y);
             socket.emit('updateLevel', 1);
             updateGUI();
-            updateHpBar(player, 130, 130, 0);
+            updateHpBar(player, 500, 500, 0);
         } else if (otherPlayers[data.id]) {
             otherPlayers[data.id].setPosition(data.x, data.y);
             updateHpBar(otherPlayers[data.id], data.hp, data.maxHp, 0);
@@ -700,11 +700,20 @@ function createPlayerContainer(scene, x, y, nameText, colorHex) {
     container.shieldGraphic = shieldGfx;
 
     let name = scene.add.text(0, -45, nameText, { font: 'bold 13px Arial', fill: '#ffffff', stroke: '#052e16', strokeThickness: 4 }).setOrigin(0.5);
-    let hpBg = scene.add.rectangle(0, -30, 44, 8, 0x052e16).setStrokeStyle(1, 0x166534);
-    let hpBar = scene.add.rectangle(-21, -30, 42, 6, 0x22c55e).setOrigin(0, 0.5);
+    let hpBg = scene.add.rectangle(0, -30, 50, 8, 0x052e16).setStrokeStyle(1, 0x166534);
+    let hpBar = scene.add.rectangle(-24, -30, 48, 6, 0x22c55e).setOrigin(0, 0.5);
 
-    container.add([shadow, shieldGfx, charGfx, name, hpBg, hpBar]);
+    // 繪製 5 個小格的分隔線
+    let gridGfx = scene.add.graphics();
+    gridGfx.lineStyle(1, 0x052e16, 0.8);
+    for (let i = 1; i < 5; i++) {
+        let gridX = -24 + (48 / 5) * i;
+        gridGfx.lineBetween(gridX, -33, gridX, -27);
+    }
+
+    container.add([shadow, shieldGfx, charGfx, name, hpBg, hpBar, gridGfx]);
     container.hpBar = hpBar;
+    container.gridGfx = gridGfx;
     container.setDepth(10);
 
     scene.physics.world.enable(container);
@@ -717,7 +726,7 @@ function createPlayerContainer(scene, x, y, nameText, colorHex) {
 function updateHpBar(container, hp, maxHp, shield = 0) {
     if (container && container.hpBar) {
         let pct = Math.max(0, hp / maxHp);
-        container.hpBar.width = 42 * pct;
+        container.hpBar.width = 48 * pct;
         if (shield > 0) {
             container.hpBar.setFillStyle(0x38bdf8); // 有護盾時顯示為藍色血條
         } else {
