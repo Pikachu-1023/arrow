@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>箭之勇者:Zhenhe</title>
-    <!-- Phaser & Socket.io -->
+    <!-- Phaser 遊戲引擎 & Socket.io -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <!-- FontAwesome & NippleJS -->
+    <!-- FontAwesome 圖標套件 & NippleJS 虛擬搖桿套件 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
-    <!-- 外部動態與特效套件 -->
+    <!-- 外部動態特效套件 (Animate.css, Canvas-Confetti, Simplex-Noise) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
@@ -179,7 +179,6 @@ let playerStats = {
     name: '玩家', level: 1, exp: 0, hp: 500, maxHp: 500, shield: 0, maxShield: 100,
     speed: 240, arrowCount: 1, fireRate: 300, 
     piercing: false, lifesteal: 0,
-    // 技能屬性
     hasShield: false,
     hasBerserk: false,
     hasPoison: false,
@@ -189,7 +188,6 @@ let playerStats = {
     swiftCooldon: 1.0
 };
 
-// 技能庫（11 項技能，每次隨機抽 3 個）
 const ALL_SKILLS = [
     { id: 'triple', name: '箭矢 +1', desc: '多發射一支箭矢', icon: 'fa-burst', color: '#38bdf8' },
     { id: 'speed', name: '攻速 UP', desc: '提升射擊速度', icon: 'fa-gauge-high', color: '#38bdf8' },
@@ -197,7 +195,6 @@ const ALL_SKILLS = [
     { id: 'pierce', name: '貫穿之箭', desc: '箭矢穿透障礙物', icon: 'fa-arrows-to-eye', color: '#f97316' },
     { id: 'lifesteal', name: '吸血光環', desc: '命中時恢復生命', icon: 'fa-vial', color: '#ef4444' },
     { id: 'hp', name: '生命上限', desc: '增加半格最大血量 (50 HP)', icon: 'fa-heart-pulse', color: '#10b981' },
-    // 5 個新技能與屬性
     { id: 'shield', name: '聖光護盾', desc: '獲得防護罩與護盾', icon: 'fa-shield-halved', color: '#facc15' },
     { id: 'poison', name: '毒箭特化', desc: '附帶毒霧與持續傷害', icon: 'fa-flask-vial', color: '#84cc16' },
     { id: 'frost', name: '寒霜箭矢', desc: '附帶冰霜減速效果', icon: 'fa-snowflake', color: '#06b6d4' },
@@ -239,7 +236,6 @@ function initGame() {
 function create() {
     sceneRef = this;
 
-    // 繪製精美箭矢紋理
     let arrowGfx = sceneRef.make.graphics({x: 0, y: 0, add: false});
     arrowGfx.lineStyle(2, 0xd97706, 1);
     arrowGfx.lineBetween(0, 5, 18, 5);
@@ -249,16 +245,13 @@ function create() {
     arrowGfx.fillRect(0, 2, 4, 6);
     arrowGfx.generateTexture('arrowTex', 28, 10);
 
-    // 擴大地圖範圍
     sceneRef.cameras.main.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
     sceneRef.physics.world.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
 
-    // 精美背景地圖繪製 (高質感草原與草叢雜點)
     let bgGraphics = sceneRef.add.graphics();
     bgGraphics.fillStyle(0x064e3b, 1);
     bgGraphics.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
     
-    // 棋盤格與漸層質感
     for (let x = 0; x < MAP_WIDTH; x += 100) {
         for (let y = 0; y < MAP_HEIGHT; y += 100) {
             let isEven = ((x / 100) + (y / 100)) % 2 === 0;
@@ -267,7 +260,6 @@ function create() {
         }
     }
 
-    // 地圖裝飾：隨機細節小草點綴
     let decoSeed = 999;
     for (let i = 0; i < 300; i++) {
         let dx = seededRandom(decoSeed++) * MAP_WIDTH;
@@ -376,7 +368,7 @@ function create() {
             updateGUI();
         }
         let target = (data.id === socket.id) ? player : otherPlayers[data.id];
-        if (target) updateHpBar(target, data.hp, data.maxHp, (data.id === socket.id ? playerStats.shield : 0));
+        if (target) updateHpBar(target, data.hp, (data.id === socket.id ? playerStats.maxHp : data.maxHp), (data.id === socket.id ? playerStats.shield : 0));
     });
 
     socket.on('killReward', (data) => {
@@ -427,24 +419,20 @@ function create() {
         });
     });
 
-    // 箭矢擊中敵人邏輯與豐富打擊特效
     sceneRef.physics.add.overlap(arrowsGroup, otherPlayersGroup, (arrow, targetContainer) => {
         if (targetContainer && targetContainer.id && targetContainer.id !== socket.id) {
             let baseDmg = 15;
             if (playerStats.hasPoison) baseDmg += 6; 
 
-            // 特效：爆裂火花
             if (arrow.effects && arrow.effects.explosive) {
                 createExplosionFX(sceneRef, arrow.x, arrow.y);
                 baseDmg += 10;
             }
 
-            // 特效：冰霜減速/特效
             if (arrow.effects && arrow.effects.frost) {
                 createFrostFX(sceneRef, targetContainer.x, targetContainer.y);
             }
 
-            // 特效：毒氣殘影
             if (arrow.effects && arrow.effects.poison) {
                 createPoisonFX(sceneRef, targetContainer.x, targetContainer.y);
             }
@@ -462,7 +450,6 @@ function create() {
     });
 }
 
-// 動態特效生成：爆炸
 function createExplosionFX(scene, x, y) {
     let circle = scene.add.circle(x, y, 10, 0xf43f5e, 0.8);
     scene.tweens.add({
@@ -474,7 +461,6 @@ function createExplosionFX(scene, x, y) {
     });
 }
 
-// 動態特效生成：冰霜
 function createFrostFX(scene, x, y) {
     for (let i = 0; i < 6; i++) {
         let p = scene.add.circle(x + (Math.random()*30 - 15), y + (Math.random()*30 - 15), 4, 0x38bdf8, 0.9);
@@ -487,7 +473,6 @@ function createFrostFX(scene, x, y) {
     }
 }
 
-// 動態特效生成：毒霧
 function createPoisonFX(scene, x, y) {
     let cloud = scene.add.circle(x, y, 15, 0x84cc16, 0.6);
     scene.tweens.add({
@@ -499,9 +484,39 @@ function createPoisonFX(scene, x, y) {
     });
 }
 
+// 建立ㄇ字型石頭掩體
+function createRockFortress(scene, x, y) {
+    let fortGroup = [];
+    
+    // 定義ㄇ字型的三面牆體結構 (相對座標, 寬, 高)
+    let wallConfigs = [
+        { x: 0, y: -60, w: 140, h: 28 },  // 上牆
+        { x: -56, y: 0, w: 28, h: 100 },  // 左牆
+        { x: 56, y: 0, w: 28, h: 100 }    // 右牆
+    ];
+
+    wallConfigs.forEach(cfg => {
+        let wallGfx = scene.add.graphics();
+        wallGfx.fillStyle(0x334155, 1);
+        wallGfx.fillRect(-cfg.w/2, -cfg.h/2, cfg.w, cfg.h);
+        wallGfx.lineStyle(3, 0x64748b, 1);
+        wallGfx.strokeRect(-cfg.w/2, -cfg.h/2, cfg.w, cfg.h);
+
+        let container = scene.add.container(x + cfg.x, y + cfg.y, [wallGfx]);
+        scene.physics.world.enable(container, Phaser.Physics.Arcade.STATIC_BODY);
+        container.body.setSize(cfg.w, cfg.h);
+        container.body.setOffset(-cfg.w/2, -cfg.h/2);
+        container.setDepth(5);
+        
+        obstaclesGroup.add(container);
+        fortGroup.push(container);
+    });
+
+    return fortGroup;
+}
+
 function generateForestTerrain() {
     let treeSeed = 8888;
-    // 依據更大地圖增加樹木
     for (let i = 0; i < 80; i++) {
         let tx = Math.floor(seededRandom(treeSeed++) * (MAP_WIDTH - 100)) + 50;
         let ty = Math.floor(seededRandom(treeSeed++) * (MAP_HEIGHT - 100)) + 50;
@@ -517,11 +532,17 @@ function generateForestTerrain() {
         treeGfx.setDepth(1);
     }
 
+    // 地圖四個方位生成可躲藏的「ㄇ字型大型巨石」
+    createRockFortress(sceneRef, 600, 500);
+    createRockFortress(sceneRef, 2200, 500);
+    createRockFortress(sceneRef, 600, 1500);
+    createRockFortress(sceneRef, 2200, 1500);
+
     for (let x = 150; x < MAP_WIDTH - 100; x += 140) {
         for (let y = 150; y < MAP_HEIGHT - 100; y += 140) {
             let noiseVal = simplex.noise2D(x * 0.002, y * 0.002);
             
-            if (noiseVal > 0.35) {
+            if (noiseVal > 0.38) {
                 let pillarGfx = sceneRef.add.graphics();
                 let type = Math.floor(Math.abs(noiseVal * 10)) % 3;
                 let container = sceneRef.add.container(x, y);
@@ -612,13 +633,11 @@ function update() {
         }
     }
 
-    // 草叢隱身判定
     let inBush = false;
     sceneRef.physics.overlap(player, bushesGroup, () => { inBush = true; });
     player.setAlpha(inBush ? 0.4 : 1.0);
     player.inBush = inBush;
 
-    // 護盾金光特效更新
     if (player.shieldGraphic) {
         player.shieldGraphic.setVisible(playerStats.shield > 0);
     }
@@ -641,7 +660,6 @@ function update() {
         }
     });
 
-    // 射擊邏輯與附帶屬性特效
     let now = sceneRef.time.now;
     if (now - lastFired > currentFireRate) {
         lastFired = now;
@@ -688,7 +706,6 @@ function createPlayerContainer(scene, x, y, nameText, colorHex) {
     charGfx.lineStyle(3, 0xffffff, 0.9); charGfx.strokeCircle(0, 0, 20);
     charGfx.fillStyle(0xffffff, 1); charGfx.fillCircle(8, -6, 4); charGfx.fillCircle(8, 6, 4);
 
-    // 護盾金光特效層
     let shieldGfx = scene.add.graphics();
     shieldGfx.lineStyle(3, 0xfacc15, 0.85);
     shieldGfx.strokeCircle(0, 0, 27);
@@ -703,13 +720,7 @@ function createPlayerContainer(scene, x, y, nameText, colorHex) {
     let hpBg = scene.add.rectangle(0, -30, 50, 8, 0x052e16).setStrokeStyle(1, 0x166534);
     let hpBar = scene.add.rectangle(-24, -30, 48, 6, 0x22c55e).setOrigin(0, 0.5);
 
-    // 繪製 5 個小格的分隔線
     let gridGfx = scene.add.graphics();
-    gridGfx.lineStyle(1, 0x052e16, 0.8);
-    for (let i = 1; i < 5; i++) {
-        let gridX = -24 + (48 / 5) * i;
-        gridGfx.lineBetween(gridX, -33, gridX, -27);
-    }
 
     container.add([shadow, shieldGfx, charGfx, name, hpBg, hpBar, gridGfx]);
     container.hpBar = hpBar;
@@ -720,7 +731,24 @@ function createPlayerContainer(scene, x, y, nameText, colorHex) {
     container.body.setCircle(20, -20, -20);
     container.body.setCollideWorldBounds(true);
 
+    // 初始繪製血條格線
+    renderHpGrid(container, playerStats.maxHp);
+
     return container;
+}
+
+// 根據最大血量動態繪製每半格 (50 HP) 的分隔線
+function renderHpGrid(container, maxHp) {
+    if (!container || !container.gridGfx) return;
+    let gridGfx = container.gridGfx;
+    gridGfx.clear();
+    gridGfx.lineStyle(1, 0x052e16, 0.9);
+
+    let segments = Math.floor(maxHp / 50); // 每 50 HP 為半格
+    for (let i = 1; i < segments; i++) {
+        let gridX = -24 + (48 / segments) * i;
+        gridGfx.lineBetween(gridX, -33, gridX, -27);
+    }
 }
 
 function updateHpBar(container, hp, maxHp, shield = 0) {
@@ -728,10 +756,11 @@ function updateHpBar(container, hp, maxHp, shield = 0) {
         let pct = Math.max(0, hp / maxHp);
         container.hpBar.width = 48 * pct;
         if (shield > 0) {
-            container.hpBar.setFillStyle(0x38bdf8); // 有護盾時顯示為藍色血條
+            container.hpBar.setFillStyle(0x38bdf8);
         } else {
             container.hpBar.setFillStyle(0x22c55e);
         }
+        renderHpGrid(container, maxHp);
     }
 }
 
@@ -763,7 +792,6 @@ function spawnGem(scene, gemData) {
     gemsGroup.add(gemContainer);
 }
 
-// 發射箭矢（含多重外觀特效及毒箭、冰霜、爆炸效果）
 function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing, inBush, scale = 1.0, effects = {}) {
     let arrow = scene.physics.add.sprite(x, y, 'arrowTex');
     arrow.setRotation(angle);
@@ -773,15 +801,14 @@ function fireArrowLocal(scene, x, y, angle, isOwner, isPiercing, inBush, scale =
     arrow.effects = effects;
     arrow.setDepth(8);
 
-    // 特效染色與動態視覺
     if (effects.poison) {
-        arrow.setTint(0x84cc16); // 毒箭綠光
+        arrow.setTint(0x84cc16);
     } else if (effects.frost) {
-        arrow.setTint(0x38bdf8); // 寒霜藍光
+        arrow.setTint(0x38bdf8);
     } else if (effects.explosive) {
-        arrow.setTint(0xf43f5e); // 爆裂紅光
+        arrow.setTint(0xf43f5e);
     } else if (isPiercing) {
-        arrow.setTint(0xf97316); // 貫穿橘光
+        arrow.setTint(0xf97316);
     }
 
     if (inBush) {
@@ -827,7 +854,6 @@ function showUpgradeModal() {
     
     container.innerHTML = '';
 
-    // 洗牌維持隨機抽取 3 個技能
     let shuffled = [...ALL_SKILLS].sort(() => 0.5 - Math.random());
     let selectedSkills = shuffled.slice(0, 3);
 
@@ -866,7 +892,6 @@ function applySkill(type) {
         playerStats.maxHp += 50; 
         playerStats.hp += 50; 
     }
-    // 5 個新技能套用 logic
     if (type === 'shield') {
         playerStats.hasShield = true;
         playerStats.shield = Math.min(playerStats.maxShield, playerStats.shield + 50);
@@ -877,6 +902,7 @@ function applySkill(type) {
     if (type === 'giant') playerStats.arrowScale += 0.8;
     
     document.getElementById('upgrade-modal').style.display = 'none';
+    updateHpBar(player, playerStats.hp, playerStats.maxHp, playerStats.shield);
     updateGUI();
 }
 </script>
